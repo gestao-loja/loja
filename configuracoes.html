@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações da loja — Gestão Loja</title>
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    .cfg-page { max-width: 920px; margin: 0 auto; padding: 30px 20px; }
+
+    .cfg-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, .06);
+      margin-bottom: 20px;
+    }
+
+    .cfg-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 4px;
+      color: #111827;
+    }
+
+    .cfg-sub {
+      color: #64748b;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    .cfg-section {
+      font-size: 13px;
+      font-weight: 800;
+      color: #4f46e5;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin: 22px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #eef2f7;
+    }
+
+    .cfg-section:first-of-type { margin-top: 0; }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 14px; }
+
+    .form-group { margin-bottom: 14px; }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      height: 44px;
+      padding: 0 14px;
+      border: 1px solid #dbe2ea;
+      border-radius: 10px;
+      background: #f8fafc;
+      font-size: 14px;
+      color: #111827;
+      outline: none;
+      transition: .15s;
+      font-family: inherit;
+    }
+
+    .form-group textarea {
+      height: auto;
+      min-height: 80px;
+      padding: 12px 14px;
+      resize: vertical;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: #4f46e5;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, .10);
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .logo-preview {
+      width: 90px;
+      height: 90px;
+      border-radius: 16px;
+      background: #f0f2f5;
+      border: 2px dashed #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .logo-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .logo-preview span {
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .logo-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      color: #fff;
+    }
+
+    .btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+    }
+
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    .btn-danger {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    .btn-danger:hover { background: #fee2e2; }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eef2f7;
+    }
+
+    .msg {
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-top: 14px;
+    }
+
+    .msg.error { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; }
+    .msg.success { color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      font-size: 13px;
+      color: #334155;
+    }
+
+    .check-row input { width: auto; height: auto; margin: 0; }
+
+    @media (max-width: 520px) {
+      .grid2, .grid3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body data-page="configuracoes">
+
+  <div id="app" class="app">
+
+    <div id="menu"></div>
+
+    <main class="main">
+
+      <div class="topbar">
+        <div>
+          <h1>Configurações</h1>
+          <div class="muted" id="pageSubtitle"></div>
+        </div>
+
+        <div class="user-info">
+          <br>
+          <span id="userEmail"></span>
+        </div>
+      </div>
+
+      <div id="content" class="cfg-page">
+
+        <div class="cfg-card">
+          <div class="cfg-title">Dados da loja</div>
+          <div class="cfg-sub">
+            Estas informações aparecem no catálogo, PDFs e documentos.
+          </div>
+
+          <!-- Logo -->
+          <div class="logo-area">
+            <div class="logo-preview" id="logoPreview">
+              <span>Sem logo</span>
+            </div>
+
+            <div class="logo-actions">
+              <label
+                for="logoInput"
+                class="btn btn-primary btn-small"
+                style="display:inline-block;cursor:pointer;text-align:center;"
+              >
+                📁 Escolher logo
+              </label>
+              <input
+                type="file"
+                id="logoInput"
+                accept="image/*"
+                style="display:none;"
+              >
+              <button
+                type="button"
+                class="btn btn-danger btn-small"
+                id="btnRemoverLogo"
+                style="display:none;"
+              >
+                🗑 Remover logo
+              </button>
+            </div>
+          </div>
+
+          <div id="logoStatus" style="font-size:12px;color:#64748b;margin-top:8px;"></div>
+
+          <!-- Nome / Fantasia / Razão -->
+          <div class="cfg-section">Identificação</div>
+
+          <div class="form-group">
+            <label for="c_nome">Nome da loja *</label>
+            <input id="c_nome" type="text" maxlength="120" required>
+          </div>
+
+          <div class="grid2">
+            <div class="form-group">
+              <label for="c_nome_fantasia">Nome fantasia</label>
+              <input id="c_nome_fantasia" type="text" maxlength="120">
+            </div>
+
+            <div class="form-group">
+              <label for="c_razao_social">Razão social</label>
+              <input id="c_razao_social" type="text" maxlength="160">
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="form-group">
+              <label for="c_cnpj">CNPJ</label>
+              <input id="c_cnpj" type="text" maxlength="18" placeholder="00.000.000/0000-00">
+            </div>
+
+            <div class="form-group">
+              <label for="c_email">E-mail da loja</label>
+              <input id="c_email" type="email" maxlength="160">
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="form-group">
+              <label for="c_telefone">Telefone</label>
+              <input id="c_telefone" type="text" maxlength="20">
+            </div>
+
+            <div class="form-group">
+              <label for="c_whatsapp">WhatsApp</label>
+              <input id="c_whatsapp" type="text" maxlength="20">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="c_site">Site</label>
+            <input id="c_site" type="text" maxlength="160" placeholder="https://...">
+          </div>
+
+          <!-- Endereço -->
+          <div class="cfg-section">Endereço</div>
+
+          <div class="grid3">
+            <div class="form-group">
+              <label for="c_cep">CEP</label>
+              <input id="c_cep" type="text" maxlength="9" placeholder="00000-000">
+            </div>
+
+            <div class="form-group">
+              <label for="c_endereco">Endereço</label>
+              <input id="c_endereco" type="text" maxlength="160">
+            </div>
+
+            <div class="form-group">
+              <label for="c_numero">Número</label>
+              <input id="c_numero" type="text" maxlength="20">
+            </div>
+          </div>
+
+          <div class="grid3">
+            <div class="form-group">
+              <label for="c_complemento">Complemento</label>
+              <input id="c_complemento" type="text" maxlength="80">
+            </div>
+
+            <div class="form-group">
+              <label for="c_bairro">Bairro</label>
+              <input id="c_bairro" type="text" maxlength="80">
+            </div>
+
+            <div class="form-group">
+              <label for="c_estado">UF</label>
+              <input id="c_estado" type="text" maxlength="2" style="text-transform:uppercase;">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="c_cidade">Cidade</label>
+            <input id="c_cidade" type="text" maxlength="80">
+          </div>
+
+          <!-- Preferências -->
+          <div class="cfg-section">Preferências</div>
+
+          <div class="grid2">
+            <div class="form-group">
+              <label for="c_moeda">Moeda</label>
+              <select id="c_moeda">
+                <option value="BRL">BRL — Real brasileiro</option>
+                <option value="USD">USD — Dólar americano</option>
+                <option value="EUR">EUR — Euro</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="c_validade_orcamento">Validade padrão de orçamento (dias)</label>
+              <input id="c_validade_orcamento" type="number" min="1" max="365">
+            </div>
+          </div>
+
+          <div class="check-row">
+            <input type="checkbox" id="c_permitir_estoque_negativo">
+            <label for="c_permitir_estoque_negativo" style="margin:0;font-weight:400;cursor:pointer;">
+              Permitir estoque negativo
+            </label>
+          </div>
+
+          <div class="check-row" style="margin-top:10px;">
+            <input type="checkbox" id="c_exibir_preco_catalogo">
+            <label for="c_exibir_preco_catalogo" style="margin:0;font-weight:400;cursor:pointer;">
+              Exibir preços no catálogo (padrão)
+            </label>
+          </div>
+
+          <div class="check-row" style="margin-top:10px;">
+            <input type="checkbox" id="c_ativo">
+            <label for="c_ativo" style="margin:0;font-weight:400;cursor:pointer;">
+              Loja ativa
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="window.location.reload()">
+              Cancelar
+            </button>
+
+            <button type="button" class="btn btn-primary" id="btnSalvar">
+              Salvar alterações
+            </button>
+          </div>
+
+          <div id="cfgMessage"></div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+  <script src="configuracoes.js"></script>
+
+</body>
+</html>

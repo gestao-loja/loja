@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos - Gestão Loja</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js" defer></script>
+  <script src="pedidos.js" defer></script>
+
+  <style>
+    /* Formulário em 2 colunas */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555d6d;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #d8dce5;
+      border-radius: 7px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-section-title {
+      grid-column: 1 / -1;
+      margin-top: 16px;
+      margin-bottom: -2px;
+      padding-top: 14px;
+      border-top: 1px solid #e5e8ed;
+      font-size: 12px;
+      font-weight: 600;
+      color: #555d6d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-section-title:first-child {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: #8b93a5;
+      margin-top: -2px;
+    }
+
+    .hidden-field {
+      display: none !important;
+    }
+
+    .entrega-toggle {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      padding: 12px 15px;
+      background: #f8f9fb;
+      border: 1px solid #e1e4ea;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .entrega-toggle label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      cursor: pointer;
+      font-weight: 500;
+      color: #343a46;
+    }
+
+    .entrega-toggle input[type="radio"] {
+      width: auto;
+      margin: 0;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .form-group.full {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+<body data-page="pedidos">
+  <div id="menu"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Pedidos</h1>
+        <div class="muted" id="pageSubtitle">
+          Gerencie os pedidos dos clientes
+        </div>
+      </div>
+
+      <div class="user-info">
+        <br>
+        <span id="userEmail"></span>
+      </div>
+    </div>
+
+    <section class="content">
+      <div
+        style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap:15px;
+          margin-bottom:20px;
+          flex-wrap:wrap;
+        "
+      >
+        <button
+          class="btn btn-primary"
+          onclick="openNewOrder()"
+        >
+          + Novo pedido
+        </button>
+
+        <button
+          class="btn btn-secondary"
+          onclick="openClientForm()"
+        >
+          + Cadastrar cliente
+        </button>
+      </div>
+
+      <div id="ordersContainer">
+        Carregando pedidos...
+      </div>
+    </section>
+  </main>
+
+  <div id="modal" class="modal hidden">
+    <div
+      class="modal-card"
+      style="max-width:900px;"
+    >
+      <div class="modal-head">
+        <h2 id="modalTitle">Pedido</h2>
+
+        <button
+          class="close"
+          onclick="closeModal()"
+        >
+          ×
+        </button>
+      </div>
+
+      <div id="modalContent"></div>
+    </div>
+  </div>
+</body>
+</html>

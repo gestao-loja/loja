@@ -1,0 +1,91 @@
+<aside class="sidebar">
+
+  <div class="brand">
+    Gestão Loja
+    <small id="storeName">Carregando loja...</small>
+  </div>
+
+  <nav class="nav">
+    <button data-page="dashboard" onclick="go('dashboard')">
+      🏠 Dashboard
+    </button>
+
+    <button data-page="produtos" onclick="go('produtos')">
+      📦 Produtos
+    </button>
+
+    <button data-page="variacoes" onclick="go('variacoes')">
+      🎨 Variações
+    </button>
+
+    <button data-page="estoque" onclick="go('estoque')">
+      📊 Estoque
+    </button>
+
+    <button data-page="compras" onclick="go('compras')">
+      📥 Compras
+    </button>
+
+    <button data-page="pedidos" onclick="go('pedidos')">
+      🛒 Pedidos
+    </button>
+
+    <!-- NOVO MÓDULO FINANCEIRO -->
+    <button data-page="financeiro" onclick="go('financeiro')">
+      💰 Financeiro
+    </button>
+
+    <button data-page="catalogo" onclick="go('catalogo')">
+      🌐 Catálogo
+    </button>
+
+    <button data-page="clientes" onclick="go('clientes')">
+      👥 Clientes
+    </button>
+
+    <button data-page="orcamentos" onclick="go('orcamentos')">
+      🧾 Orçamentos
+    </button>
+    <button
+      class="nav-item"
+      data-page="convites"
+      onclick="go('convites')"
+      style="display:none;"
+    >
+      <span class="nav-icon">🎟️</span>
+      <span>Convites</span>
+    </button>
+
+    <button
+      class="nav-item"
+      data-page="mockups"
+      onclick="go('mockups')">
+      🖼️ Mockups
+    </button>
+
+    <button
+      class="nav-item"
+      data-page="maquinas"
+      onclick="go('maquinas')">
+      🖨️ Máquinas
+    </button>
+
+    <button
+      class="nav-item"
+      data-page="configuracoes"
+      onclick="go('configuracoes')"
+    >
+      <span class="nav-icon">⚙️</span>
+      <span>Configurações</span>
+    </button>
+
+  </nav>
+
+  <button
+    id="logoutBtn"
+    class="btn btn-danger logout"
+    onclick="logout()">
+    Sair
+  </button>
+
+</aside>

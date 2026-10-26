@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Clientes - Gestão Loja</title>
+
+  <link rel="stylesheet" href="styles.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js" defer></script>
+  <script src="clientes.js" defer></script>
+
+  <style>
+    .clients-toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .clients-search {
+      flex: 1;
+      position: relative;
+    }
+
+    .clients-search input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px 14px 12px 38px;
+      border: 1px solid #d8dce5;
+      border-radius: 8px;
+      outline: none;
+      background: white;
+    }
+
+    .clients-search span {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #8b93a5;
+    }
+
+    .client-filter {
+      width: 145px;
+      padding: 11px;
+      border: 1px solid #d8dce5;
+      border-radius: 8px;
+      background: white;
+    }
+
+    .clients-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .client-stat {
+      background: white;
+      border: 1px solid #e1e4ea;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .client-stat-label {
+      font-size: 12px;
+      color: #7b8394;
+      margin-bottom: 5px;
+    }
+
+    .client-stat-value {
+      font-size: 21px;
+      font-weight: 700;
+      color: #202635;
+    }
+
+    .client-stat-detail {
+      font-size: 12px;
+      color: #7b8394;
+      margin-top: 4px;
+    }
+
+    .clients-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .client-card {
+      background: white;
+      border: 1px solid #e2e5eb;
+      border-radius: 10px;
+      padding: 17px;
+    }
+
+    .client-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 15px;
+    }
+
+    .client-name {
+      font-weight: 600;
+      font-size: 15px;
+      color: #303746;
+    }
+
+    .client-type {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #7d8492;
+    }
+
+    .client-status {
+      font-size: 11px;
+      padding: 5px 9px;
+      border-radius: 20px;
+      background: #e8f7ee;
+      color: #157347;
+      white-space: nowrap;
+    }
+
+    .client-status.inactive {
+      background: #fcebea;
+      color: #b42318;
+    }
+
+    .client-info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      border-top: 1px solid #edf0f4;
+      margin-top: 14px;
+      padding-top: 14px;
+    }
+
+    .client-info-label {
+      font-size: 10px;
+      color: #7d8492;
+      margin-bottom: 3px;
+    }
+
+    .client-info-value {
+      font-size: 13px;
+      color: #303746;
+      font-weight: 500;
+    }
+
+    .client-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .client-actions button {
+      flex: 1;
+    }
+
+    .empty-clients {
+      background: white;
+      border: 1px solid #e2e5eb;
+      border-radius: 10px;
+      padding: 40px;
+      text-align: center;
+      color: #7d8492;
+    }
+
+    .client-detail-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .detail-box {
+      border: 1px solid #e3e6eb;
+      border-radius: 8px;
+      padding: 13px;
+    }
+
+    .detail-box small {
+      display: block;
+      color: #7d8492;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .detail-box strong {
+      font-size: 14px;
+      color: #303746;
+    }
+
+    .client-history {
+      border-top: 1px solid #e5e8ed;
+      padding-top: 15px;
+      margin-top: 15px;
+    }
+
+    .client-history h3 {
+      margin: 0 0 12px;
+      font-size: 15px;
+    }
+
+    .purchase-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 10px;
+      padding: 11px 0;
+      border-bottom: 1px solid #edf0f4;
+      font-size: 13px;
+    }
+
+    .purchase-row:last-child {
+      border-bottom: 0;
+    }
+
+    .purchase-label {
+      font-size: 10px;
+      color: #7d8492;
+      margin-bottom: 3px;
+    }
+
+    .purchase-value {
+      color: #303746;
+      font-weight: 500;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555d6d;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #d8dce5;
+      border-radius: 7px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-section-title {
+      grid-column: 1 / -1;
+      margin-top: 16px;
+      margin-bottom: -2px;
+      padding-top: 14px;
+      border-top: 1px solid #e5e8ed;
+      font-size: 12px;
+      font-weight: 600;
+      color: #555d6d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-section-title:first-child {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: #8b93a5;
+      margin-top: -2px;
+    }
+
+    .hidden-field {
+      display: none !important;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .clients-summary {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .client-info-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .clients-toolbar {
+        flex-direction: column;
+      }
+
+      .clients-search {
+        width: 100%;
+      }
+
+      .client-filter {
+        width: 100%;
+      }
+
+      .clients-summary {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .client-info-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .client-detail-header {
+        grid-template-columns: 1fr;
+      }
+
+      .purchase-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-group.full {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+
+<body data-page="clientes">
+
+  <div id="menu"></div>
+
+  <main class="main">
+
+    <div class="topbar">
+      <div>
+        <h1>Gestão de Clientes</h1>
+        <div class="muted" id="pageSubtitle">
+          Visualize e gerencie sua base de contatos
+        </div>
+      </div>
+
+      <div class="user-info">
+        <span id="userEmail"></span>
+        <br>
+        <span id="storeFantasyName"></span>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <div class="clients-toolbar">
+
+        <div class="clients-search">
+          <span>⌕</span>
+          <input
+            type="text"
+            id="clientSearch"
+            placeholder="Buscar por nome, CPF ou CNPJ..."
+            oninput="renderClients()"
+          >
+        </div>
+
+        <select
+          id="clientFilter"
+          class="client-filter"
+          onchange="renderClients()"
+        >
+          <option value="todos">Todos</option>
+          <option value="ativos">Ativos</option>
+          <option value="inativos">Inativos</option>
+          <option value="fisicos">Pessoa Física</option>
+          <option value="juridicos">Pessoa Jurídica</option>
+          <option value="sem_compra">Sem compra</option>
+        </select>
+
+        <button
+          class="btn btn-primary"
+          onclick="openNewClient()"
+        >
+          + Novo cliente
+        </button>
+
+      </div>
+
+      <div class="clients-summary">
+
+        <div class="client-stat">
+          <div class="client-stat-label">
+            Total de clientes
+          </div>
+          <div
+            class="client-stat-value"
+            id="totalClients"
+          >
+            0
+          </div>
+          <div class="client-stat-detail">
+            Cadastrados na loja
+          </div>
+        </div>
+
+        <div class="client-stat">
+          <div class="client-stat-label">
+            Clientes ativos
+          </div>
+          <div
+            class="client-stat-value"
+            id="activeClients"
+          >
+            0
+          </div>
+          <div class="client-stat-detail">
+            Clientes ativos
+          </div>
+        </div>
+
+        <div class="client-stat">
+          <div class="client-stat-label">
+            Total vendido
+          </div>
+          <div
+            class="client-stat-value"
+            id="totalClientSales"
+          >
+            R$ 0,00
+          </div>
+          <div class="client-stat-detail">
+            Pedidos confirmados
+          </div>
+        </div>
+
+        <div class="client-stat">
+          <div class="client-stat-label">
+            Sem compra
+          </div>
+          <div
+            class="client-stat-value"
+            id="clientsWithoutPurchase"
+          >
+            0
+          </div>
+          <div class="client-stat-detail">
+            Ainda não compraram
+          </div>
+        </div>
+
+      </div>
+
+      <div id="clientsList" class="clients-list">
+        <div class="empty-clients">
+          Carregando clientes...
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <div id="modal" class="modal hidden">
+
+    <div
+      class="modal-card"
+      style="max-width: 900px;"
+    >
+
+      <div class="modal-head">
+
+        <h2 id="modalTitle">
+          Cliente
+        </h2>
+
+        <button
+          class="close"
+          onclick="closeModal()"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <div id="modalContent"></div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

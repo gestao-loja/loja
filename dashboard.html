@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Gestão Loja - Dashboard</title>
+
+  <link
+    rel="stylesheet"
+    href="styles.css"
+  >
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script
+    src="app.js"
+  ></script>
+
+  <script
+    src="dashboard.js"
+    defer
+  ></script>
+
+</head>
+
+<body data-page="dashboard">
+
+  <div
+    id="app"
+    class="app"
+  >
+
+    <div id="menu"></div>
+
+    <main class="main">
+
+      <div class="topbar">
+
+        <div>
+
+          <h1>
+            Dashboard
+          </h1>
+
+          <div
+            class="muted"
+            id="pageSubtitle"
+          >
+            Visão geral da sua loja
+          </div>
+
+        </div>
+
+        <div class="user-info">
+
+          <strong id="userName">
+            Usuário
+          </strong>
+
+          <br>
+
+          <span id="storeFantasyName">
+          </span>
+
+        </div>
+
+      </div>
+
+      <div
+        class="dashboard-content"
+        id="content"
+      >
+
+        <div class="dashboard-toolbar">
+
+          <select
+            id="dashboardPeriod"
+            onchange="changeDashboardPeriod()"
+          >
+
+            <option value="today">
+              Hoje
+            </option>
+
+            <option
+              value="7"
+              selected
+            >
+              Últimos 7 dias
+            </option>
+
+            <option value="30">
+              Últimos 30 dias
+            </option>
+
+            <option value="month">
+              Este mês
+            </option>
+
+          </select>
+
+          <button
+            class="btn btn-secondary"
+            onclick="loadDashboard()"
+          >
+            ↻ Atualizar
+          </button>
+
+        </div>
+
+        <div class="dashboard-cards">
+
+          <div class="dashboard-card">
+
+            <div class="dashboard-card-icon sales">
+              R$
+            </div>
+
+            <div>
+
+              <div class="dashboard-card-label">
+                Vendas no período
+              </div>
+
+              <div
+                id="dashboardSales"
+                class="dashboard-card-value"
+              >
+                R$ 0,00
+              </div>
+
+              <div
+                id="dashboardSalesComparison"
+                class="dashboard-card-detail"
+              >
+                -
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="dashboard-card">
+
+            <div class="dashboard-card-icon orders">
+              ✓
+            </div>
+
+            <div>
+
+              <div class="dashboard-card-label">
+                Pedidos concluídos
+              </div>
+
+              <div
+                id="dashboardOrders"
+                class="dashboard-card-value"
+              >
+                0
+              </div>
+
+              <div
+                id="dashboardOrdersDetail"
+                class="dashboard-card-detail"
+              >
+                no período
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="dashboard-card alert-card">
+
+            <div class="dashboard-card-icon warning">
+              !
+            </div>
+
+            <div>
+
+              <div class="dashboard-card-label">
+                Estoque baixo
+              </div>
+
+              <div
+                id="dashboardLowStock"
+                class="dashboard-card-value"
+              >
+                0
+              </div>
+
+              <div class="dashboard-card-detail">
+                produtos abaixo do mínimo
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="dashboard-card danger-card">
+
+            <div class="dashboard-card-icon danger">
+              !
+            </div>
+
+            <div>
+
+              <div class="dashboard-card-label">
+                Sem estoque
+              </div>
+
+              <div
+                id="dashboardOutOfStock"
+                class="dashboard-card-value"
+              >
+                0
+              </div>
+
+              <div class="dashboard-card-detail">
+                produtos sem estoque
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="dashboard-grid">
+
+          <div class="dashboard-section">
+
+            <div class="dashboard-section-header">
+
+              <h2>
+                Vendas por Status
+              </h2>
+
+              <span id="ordersTotal">
+                Total: 0
+              </span>
+
+            </div>
+
+            <div class="status-chart-area">
+
+              <div
+                id="statusDonut"
+                class="status-donut"
+              >
+
+                <div class="status-donut-center">
+
+                  <strong id="statusTotal">
+                    0
+                  </strong>
+
+                  <span>
+                    Pedidos
+                  </span>
+
+                </div>
+
+              </div>
+
+              <div
+                id="statusLegend"
+                class="status-legend"
+              >
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="dashboard-section">
+
+            <div class="dashboard-section-header">
+
+              <h2>
+                Movimentação de Estoque
+              </h2>
+
+              <span>
+                Últimos 7 dias
+              </span>
+
+            </div>
+
+            <div
+              id="stockChart"
+              class="stock-chart"
+            >
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="dashboard-grid">
+
+          <div class="dashboard-section">
+
+            <div class="dashboard-section-header">
+
+              <h2>
+                Produtos mais vendidos
+              </h2>
+
+              <span>
+                No período
+              </span>
+
+            </div>
+
+            <div
+              id="topProducts"
+              class="ranking-list"
+            >
+            </div>
+
+          </div>
+
+          <div class="dashboard-section">
+
+            <div class="dashboard-section-header">
+
+              <h2>
+                Últimos pedidos
+              </h2>
+
+              <span>
+                Mais recentes
+              </span>
+
+            </div>
+
+            <div
+              id="recentOrders"
+              class="recent-orders"
+            >
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="dashboard-section">
+
+          <div class="dashboard-section-header">
+
+            <h2>
+              Resumo da loja
+            </h2>
+
+          </div>
+
+          <div class="summary-grid">
+
+            <div class="summary-item">
+
+              <span>
+                Produtos
+              </span>
+
+              <strong id="summaryProducts">
+                0
+              </strong>
+
+            </div>
+
+            <div class="summary-item">
+
+              <span>
+                Variações
+              </span>
+
+              <strong id="summaryVariations">
+                0
+              </strong>
+
+            </div>
+
+            <div class="summary-item">
+
+              <span>
+                Clientes
+              </span>
+
+              <strong id="summaryClients">
+                0
+              </strong>
+
+            </div>
+
+            <div class="summary-item">
+
+              <span>
+                Itens em estoque
+              </span>
+
+              <strong id="summaryStock">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <div
+    id="modal"
+    class="modal hidden"
+  >
+
+    <div class="modal-card">
+
+      <div class="modal-head">
+
+        <h2 id="modalTitle">
+          Cadastro
+        </h2>
+
+        <button
+          class="close"
+          onclick="closeModal()"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <div id="modalContent"></div>
+
+    </div>
+
+  </div>
+
+  <style>
+
+    .dashboard-content {
+      padding-bottom: 30px;
+    }
+
+    .dashboard-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .dashboard-toolbar select {
+      min-width: 150px;
+      padding: 9px 12px;
+      border: 1px solid #d9dde5;
+      border-radius: 7px;
+      background: white;
+      color: #343a46;
+    }
+
+    .dashboard-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .dashboard-card {
+      background: white;
+      border: 1px solid #dfe3ea;
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-height: 74px;
+    }
+
+    .dashboard-card.alert-card {
+      border-color: #f3b9b9;
+    }
+
+    .dashboard-card.danger-card {
+      border-color: #f0aeb4;
+    }
+
+    .dashboard-card-icon {
+      width: 42px;
+      height: 42px;
+      min-width: 42px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 17px;
+    }
+
+    .dashboard-card-icon.sales {
+      background: #eeeaff;
+      color: #5145cd;
+    }
+
+    .dashboard-card-icon.orders {
+      background: #e7f7ee;
+      color: #167344;
+    }
+
+    .dashboard-card-icon.warning {
+      background: #fff2df;
+      color: #c77700;
+    }
+
+    .dashboard-card-icon.danger {
+      background: #fde9eb;
+      color: #c92335;
+    }
+
+    .dashboard-card-label {
+      font-size: 11px;
+      color: #737b8a;
+      margin-bottom: 3px;
+    }
+
+    .dashboard-card-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #293140;
+    }
+
+    .dashboard-card-detail {
+      font-size: 10px;
+      color: #7d8492;
+      margin-top: 3px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .dashboard-section {
+      background: white;
+      border: 1px solid #dfe3ea;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .dashboard-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .dashboard-section-header h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #343a46;
+    }
+
+    .dashboard-section-header span {
+      font-size: 10px;
+      color: #7d8492;
+    }
+
+    .status-chart-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 25px;
+      min-height: 190px;
+    }
+
+    .status-donut {
+      width: 135px;
+      height: 135px;
+      min-width: 135px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: #e9edf2;
+    }
+
+    .status-donut::after {
+      content: "";
+      position: absolute;
+      width: 78px;
+      height: 78px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .status-donut-center {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+    }
+
+    .status-donut-center strong {
+      display: block;
+      font-size: 18px;
+      color: #303746;
+    }
+
+    .status-donut-center span {
+      display: block;
+      font-size: 9px;
+      color: #7d8492;
+    }
+
+    .status-legend {
+      display: grid;
+      gap: 8px;
+    }
+
+    .status-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      color: #4b5362;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .status-percent {
+      font-weight: 600;
+      margin-left: 3px;
+    }
+
+    .stock-chart {
+      height: 205px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      gap: 8px;
+      border-bottom: 1px solid #e5e8ed;
+      padding: 10px 5px 0;
+    }
+
+    .stock-day {
+      height: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .stock-bar-area {
+      height: 160px;
+      width: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .stock-bar {
+      width: 24px;
+      max-width: 60%;
+      min-height: 3px;
+      border-radius: 4px 4px 0 0;
+      background: #5145cd;
+    }
+
+    .stock-day-label {
+      font-size: 9px;
+      color: #7d8492;
+    }
+
+    .stock-day-value {
+      font-size: 9px;
+      color: #555d6d;
+    }
+
+    .ranking-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .ranking-item {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid #edf0f4;
+    }
+
+    .ranking-item:last-child {
+      border-bottom: 0;
+    }
+
+    .ranking-position {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #f0efff;
+      color: #5145cd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .ranking-name {
+      font-size: 12px;
+      color: #343a46;
+    }
+
+    .ranking-quantity {
+      font-size: 11px;
+      font-weight: 600;
+      color: #555d6d;
+    }
+
+    .recent-orders {
+      display: grid;
+      gap: 0;
+    }
+
+    .recent-order {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #edf0f4;
+    }
+
+    .recent-order:last-child {
+      border-bottom: 0;
+    }
+
+    .recent-order-number {
+      font-size: 12px;
+      font-weight: 600;
+      color: #343a46;
+    }
+
+    .recent-order-client {
+      font-size: 10px;
+      color: #7d8492;
+      margin-top: 3px;
+    }
+
+    .recent-order-value {
+      text-align: right;
+      font-size: 12px;
+      font-weight: 600;
+      color: #343a46;
+    }
+
+    .recent-order-status {
+      text-align: right;
+      font-size: 9px;
+      margin-top: 3px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .summary-item {
+      background: #f8f9fb;
+      border-radius: 8px;
+      padding: 13px;
+    }
+
+    .summary-item span {
+      display: block;
+      font-size: 10px;
+      color: #7d8492;
+      margin-bottom: 4px;
+    }
+
+    .summary-item strong {
+      font-size: 18px;
+      color: #343a46;
+    }
+
+    .dashboard-empty {
+      color: #8a919e;
+      font-size: 12px;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    @media (max-width: 1000px) {
+
+      .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+    }
+
+    @media (max-width: 600px) {
+
+      .dashboard-cards {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .dashboard-card {
+        padding: 12px;
+      }
+
+      .dashboard-card-icon {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+      }
+
+      .dashboard-card-value {
+        font-size: 16px;
+      }
+
+      .status-chart-area {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+    }
+
+  </style>
+
+</body>
+
+</html>

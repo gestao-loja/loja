@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar nova loja • Gestão Loja</title>
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Inter, Arial, sans-serif;
+      background: #f4f7fb;
+      color: #172033;
+    }
+
+    .signup-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(79, 70, 229, .20), transparent 30%),
+        radial-gradient(circle at 90% 80%, rgba(37, 99, 235, .18), transparent 30%),
+        linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #eff6ff 100%);
+    }
+
+    .signup-card {
+      width: 100%;
+      max-width: 520px;
+      background: rgba(255, 255, 255, .96);
+      border: 1px solid rgba(226, 232, 240, .9);
+      border-radius: 24px;
+      padding: 42px 38px;
+      box-shadow:
+        0 25px 60px rgba(15, 23, 42, .12),
+        0 8px 25px rgba(15, 23, 42, .06);
+    }
+
+    .brand {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .brand-icon {
+      width: 68px;
+      height: 68px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      box-shadow: 0 12px 25px rgba(79, 70, 229, .28);
+    }
+
+    .signup-header {
+      text-align: center;
+      margin-bottom: 26px;
+    }
+
+    .signup-header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 9px;
+    }
+
+    .signup-header p {
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .form-group { margin-bottom: 16px; }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .form-group input {
+      width: 100%;
+      height: 48px;
+      border: 1px solid #dbe2ea;
+      border-radius: 13px;
+      background: #f8fafc;
+      color: #111827;
+      font-size: 14px;
+      padding: 0 16px;
+      outline: none;
+      transition: .2s ease;
+    }
+
+    .form-group input:focus {
+      border-color: #4f46e5;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, .10);
+    }
+
+    .btn-primary {
+      width: 100%;
+      height: 53px;
+      border: none;
+      border-radius: 13px;
+      margin-top: 8px;
+      cursor: pointer;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      box-shadow: 0 10px 22px rgba(79, 70, 229, .25);
+      transition: .2s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 13px 26px rgba(79, 70, 229, .32);
+    }
+
+    .btn-primary:disabled {
+      cursor: not-allowed;
+      opacity: .7;
+      transform: none;
+    }
+
+    .message {
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .message.error {
+      color: #b91c1c;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+
+    .message.success {
+      color: #166534;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+    }
+
+    .message.info {
+      color: #1e40af;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+    }
+
+    .hidden { display: none !important; }
+
+    .footer-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #64748b;
+      text-decoration: none;
+    }
+
+    .footer-link:hover { color: #2563eb; }
+  </style>
+</head>
+
+<body data-page="cadastro">
+
+  <div class="signup-page">
+    <div class="signup-card">
+
+      <div class="brand">
+        <div class="brand-icon">GL</div>
+      </div>
+
+      <div class="signup-header">
+        <h1>Criar nova loja</h1>
+        <p>Preencha os dados abaixo. A validação do convite será feita ao confirmar.</p>
+      </div>
+
+      <div id="signupMessage"></div>
+
+      <form id="signupForm">
+        <div class="form-group">
+          <label for="storeName">Nome da loja</label>
+          <input type="text" id="storeName" placeholder="Ex.: Loja Centro" required>
+        </div>
+
+        <div class="form-group">
+          <label for="storeCnpj">CNPJ</label>
+          <input type="text" id="storeCnpj" placeholder="00.000.000/0000-00">
+        </div>
+
+        <div class="form-group">
+          <label for="storePhone">Telefone</label>
+          <input type="text" id="storePhone" placeholder="(11) 99999-9999">
+        </div>
+
+        <div class="form-group">
+          <label for="adminName">Seu nome (administrador)</label>
+          <input type="text" id="adminName" placeholder="Nome completo" required>
+        </div>
+
+        <div class="form-group">
+          <label for="adminEmail">Seu e-mail</label>
+          <input type="email" id="adminEmail" placeholder="voce@email.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="adminPassword">Senha</label>
+          <input type="password" id="adminPassword" placeholder="Mínimo 6 caracteres" minlength="6" required>
+        </div>
+
+        <button type="submit" class="btn-primary" id="signupSubmit">
+          Criar loja
+        </button>
+      </form>
+
+      <a href="index.html" class="footer-link">← Voltar para o login</a>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+
+  <script>
+    /* =========================================================
+       CADASTRO DE LOJA
+       1) Mostra o formulário sempre (se houver token na URL).
+       2) Ao clicar em "Criar loja":
+          - valida o convite (validar_convite)
+          - cria o usuário no Auth (signUp)
+          - insere a loja em gestao_loja_lojas
+          - insere o usuário em gestao_loja_usuarios
+          - marca o convite como usado
+       ========================================================= */
+
+    const signupMessage = document.getElementById("signupMessage");
+    const signupForm    = document.getElementById("signupForm");
+    const signupSubmit  = document.getElementById("signupSubmit");
+
+    function showMessage(text, type) {
+      if (!signupMessage) return;
+      signupMessage.innerHTML =
+        '<div class="message ' + (type || "info") + '">' +
+        String(text) +
+        "</div>";
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const token = new URLSearchParams(location.search).get("token");
+
+      if (!token) {
+        showMessage("Esta página precisa de um convite válido (?token=...).", "error");
+        if (signupForm) signupForm.classList.add("hidden");
+        return;
+      }
+
+      // Só para avisar o usuário — a validação de verdade acontece no submit
+      showMessage("Preencha os dados da nova loja.", "info");
+    });
+
+    if (signupForm) {
+      signupForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const token = new URLSearchParams(location.search).get("token");
+        if (!token) {
+          showMessage("Token ausente na URL.", "error");
+          return;
+        }
+
+        if (!window.db) {
+          showMessage("Conexão com o servidor indisponível. Recarregue a página.", "error");
+          return;
+        }
+
+        signupSubmit.disabled = true;
+        signupSubmit.textContent = "Criando...";
+        showMessage("Processando...", "info");
+
+        const storeName     = document.getElementById("storeName").value.trim();
+        const storeCnpj     = document.getElementById("storeCnpj").value.trim();
+        const storePhone    = document.getElementById("storePhone").value.trim();
+        const adminName     = document.getElementById("adminName").value.trim();
+        const adminEmail    = document.getElementById("adminEmail").value.trim();
+        const adminPassword = document.getElementById("adminPassword").value;
+
+        try {
+          // 1) Validar convite
+          const valid = await window.db.rpc("validar_convite", { p_token: token });
+
+          if (valid.error) {
+            throw new Error("Erro ao validar convite: " + valid.error.message);
+          }
+
+          if (!valid.data || !valid.data.valido) {
+            const motivo = (valid.data && valid.data.motivo) || "desconhecido";
+            const mensagens = {
+              nao_encontrado: "Convite não encontrado.",
+              inativo: "Este convite foi desativado.",
+              ja_usado: "Este convite já foi utilizado.",
+              expirado: "Este convite expirou."
+            };
+            throw new Error(mensagens[motivo] || "Convite inválido.");
+          }
+
+          // 2) Criar usuário no Auth
+          const signUp = await window.db.auth.signUp({
+            email: adminEmail,
+            password: adminPassword,
+            options: { data: { nome: adminName } }
+          });
+
+          if (signUp.error) {
+            throw new Error("Erro ao criar usuário: " + signUp.error.message);
+          }
+
+          const userId = signUp.data.user && signUp.data.user.id;
+          if (!userId) {
+            throw new Error("Usuário criado, mas sem ID. Verifique a confirmação de e-mail no Supabase.");
+          }
+
+          // 3) Inserir loja
+          const lojaInsert = await window.db
+            .from("gestao_loja_lojas")
+            .insert({
+              nome_fantasia: storeName,
+              cnpj: storeCnpj || null,
+              telefone: storePhone || null,
+              email: adminEmail
+            })
+            .select("id_loja")
+            .single();
+
+          if (lojaInsert.error) {
+            throw new Error("Erro ao criar loja: " + lojaInsert.error.message);
+          }
+
+          const idLoja = lojaInsert.data.id_loja;
+
+          // 4) Inserir usuário vinculado à loja
+          const usuarioInsert = await window.db
+            .from("gestao_loja_usuarios")
+            .insert({
+              id: userId,
+              id_loja: idLoja,
+              nome: adminName,
+              email: adminEmail,
+              perfil: "admin",
+              ativo: true
+            });
+
+          if (usuarioInsert.error) {
+            throw new Error("Erro ao vincular usuário à loja: " + usuarioInsert.error.message);
+          }
+
+          // 5) Marcar convite como usado
+          const usado = await window.db
+            .from("gestao_loja_convites")
+            .update({
+              usado_em: new Date().toISOString(),
+              usado_por_loja: idLoja,
+              ativo: false
+            })
+            .eq("token", token);
+
+          if (usado.error) {
+            console.warn("Aviso: convite não foi marcado como usado:", usado.error);
+          }
+
+          showMessage("Loja criada com sucesso! Redirecionando para o login...", "success");
+
+          setTimeout(function () {
+            window.location.href = "index.html";
+          }, 1800);
+
+        } catch (err) {
+          console.error("Erro no cadastro:", err);
+          showMessage(err.message || "Erro ao criar loja.", "error");
+          signupSubmit.disabled = false;
+          signupSubmit.textContent = "Criar loja";
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>

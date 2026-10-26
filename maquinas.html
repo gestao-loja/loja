@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Gestão Loja - Máquinas</title>
+
+  <link rel="stylesheet" href="styles.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+
+  <style>
+    .maquinas-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .maquinas-tab {
+      padding: 12px 18px;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      color: #888;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -1px;
+      transition: .15s;
+    }
+
+    .maquinas-tab:hover {
+      color: #333;
+    }
+
+    .maquinas-tab.active {
+      color: #222;
+      border-bottom-color: #222;
+    }
+
+    .maquinas-consulta-toolbar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .maquinas-consulta-toolbar input {
+      flex: 1;
+      min-width: 220px;
+      height: 42px;
+      padding: 0 14px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .maquinas-consulta-toolbar input:focus {
+      border-color: #999;
+    }
+
+    .consulta-card {
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      background: #fff;
+    }
+
+    .consulta-card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #222;
+    }
+
+    .consulta-card-prensa {
+      color: #666;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .consulta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .consulta-field-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #999;
+      margin-bottom: 3px;
+    }
+
+    .consulta-field-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: #222;
+    }
+
+    .consulta-maquina-tag {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 4px;
+      background: #f2f2f2;
+      color: #555;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .consulta-vazio {
+      padding: 40px 20px;
+      text-align: center;
+      color: #888;
+      font-size: 13px;
+      border: 1px dashed #ddd;
+      border-radius: 8px;
+    }
+
+    .tag-global {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 4px;
+      background: #ede9fe;
+      color: #5145cd;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 8px;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+  </style>
+</head>
+
+<body data-page="maquinas">
+
+  <div id="app" class="app">
+
+    <div id="menu"></div>
+
+    <main class="main">
+
+      <div class="topbar">
+
+        <div>
+          <h1>Máquinas</h1>
+          <div class="muted" id="pageSubtitle"></div>
+        </div>
+
+        <div class="user-info">
+          <br>
+          <span id="userEmail"></span>
+        </div>
+
+      </div>
+
+      <div id="content">
+
+        <div class="maquinas-tabs">
+
+          <button
+            type="button"
+            id="tabMaquinas"
+            class="maquinas-tab active"
+            onclick="switchTab('maquinas')"
+          >
+            Máquinas
+          </button>
+
+          <button
+            type="button"
+            id="tabConsulta"
+            class="maquinas-tab"
+            onclick="switchTab('consulta')"
+          >
+            Consultar configurações
+          </button>
+
+          <button
+            type="button"
+            id="tabGlobais"
+            class="maquinas-tab"
+            onclick="switchTab('globais')"
+          >
+            Configurações gerais
+          </button>
+
+        </div>
+
+        <!-- ABA MÁQUINAS -->
+
+        <div id="viewMaquinas">
+
+          <div class="section">
+
+            <div class="section-head">
+
+              <h2>Minhas máquinas</h2>
+
+              <button
+                class="btn btn-primary"
+                onclick="newMachine()"
+              >
+                + Nova máquina
+              </button>
+
+            </div>
+
+            <div id="machinesList" class="loading">
+              Carregando...
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- ABA CONSULTA -->
+
+        <div id="viewConsulta" style="display:none;">
+
+          <div class="section">
+
+            <div class="section-head">
+              <h2>Consultar configurações</h2>
+            </div>
+
+            <div class="maquinas-consulta-toolbar">
+
+              <input
+                type="text"
+                id="consultaBusca"
+                placeholder="Buscar por produto, prensa, material..."
+                oninput="renderConsulta()"
+              >
+
+            </div>
+
+            <div id="consultaList">
+              <div class="consulta-vazio">
+                Carregando...
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- ABA CONFIGURAÇÕES GERAIS -->
+
+        <div id="viewGlobais" style="display:none;">
+
+          <div class="section">
+
+            <div class="section-head">
+              <h2>Configurações gerais (loja matriz)</h2>
+            </div>
+
+            <div class="muted" style="margin-bottom:15px;">
+              Configurações compartilhadas pela matriz, disponíveis para todas as lojas.
+            </div>
+
+            <div class="maquinas-consulta-toolbar">
+
+              <input
+                type="text"
+                id="globaisBusca"
+                placeholder="Buscar por produto, prensa, material..."
+                oninput="renderGlobais()"
+              >
+
+            </div>
+
+            <div id="globaisList">
+              <div class="consulta-vazio">
+                Carregando...
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <div id="modal" class="modal hidden">
+
+    <div class="modal-card">
+
+      <div class="modal-head">
+
+        <h2 id="modalTitle">Cadastro</h2>
+
+        <button
+          class="close"
+          onclick="closeModal()"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <div id="modalContent"></div>
+
+    </div>
+
+  </div>
+
+  <script src="maquinas.js"></script>
+
+</body>
+
+</html>

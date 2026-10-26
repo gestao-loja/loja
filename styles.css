@@ -1,0 +1,838 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #4f46e5;
+    --primary2: #4338ca;
+    --bg: #f5f7fb;
+    --card: #fff;
+    --text: #172033;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --danger: #dc2626;
+    --success: #16a34a;
+}
+
+body {
+    margin: 0;
+    font-family: Inter, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.section-filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #d9dde5;
+  border-radius: 7px;
+  background: white;
+  color: #343a46;
+  font-size: 13px;
+  min-width: 180px;
+  height: 36px;
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #5145cd;
+  box-shadow: 0 0 0 3px rgba(81, 69, 205, 0.15);
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ==============================
+   LOGIN
+============================== */
+
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #eef2ff, #f8fafc);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 15px 45px #00000012;
+}
+
+.logo {
+    font-size: 25px;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: var(--muted);
+    margin-bottom: 25px;
+}
+
+label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 15px 0 7px;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 12px;
+    outline: none;
+    background: #fff;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px #4f46e51a;
+}
+
+/* ==============================
+   BOTÕES
+============================== */
+
+.btn {
+    border: 0;
+    border-radius: 10px;
+    padding: 11px 16px;
+    font-weight: 700;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: var(--primary2);
+}
+
+.btn-secondary {
+    background: #eef2ff;
+    color: var(--primary);
+}
+
+.btn-danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.full {
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* ==============================
+   MENSAGENS
+============================== */
+
+.message {
+    padding: 11px 13px;
+    border-radius: 10px;
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* ==============================
+   LAYOUT PRINCIPAL
+============================== */
+
+.app {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ==============================
+   MENU LATERAL
+   COM BARRA DE ROLAGEM
+============================== */
+
+.sidebar {
+    width: 245px;
+
+    height: 100vh;
+    height: 100dvh;
+
+    background: #111827;
+    color: #fff;
+
+    position: fixed;
+    inset: 0 auto 0 0;
+
+    padding: 20px 14px;
+    z-index: 10;
+
+    /* Organiza o menu verticalmente */
+    display: flex;
+    flex-direction: column;
+
+    /* Impede a rolagem do menu inteiro */
+    overflow: hidden;
+}
+
+/* ==============================
+   CABEÇALHO DO MENU
+============================== */
+
+.brand {
+    font-size: 21px;
+    font-weight: 800;
+    padding: 8px 10px 25px;
+
+    /* Mantém o cabeçalho fixo */
+    flex-shrink: 0;
+}
+
+.brand small {
+    display: block;
+    color: #9ca3af;
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+/* ==============================
+   NAVEGAÇÃO
+============================== */
+
+.nav {
+    /* Ocupa o espaço disponível */
+    flex: 1;
+    min-height: 0;
+
+    /* Ativa a barra de rolagem vertical */
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    /* Espaçamento interno */
+    padding: 0 4px 10px 0;
+
+    /* Rolagem suave */
+    scroll-behavior: smooth;
+
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #4b5563 #111827;
+}
+
+/* Botões do menu */
+
+.nav button {
+    display: block;
+    width: 100%;
+
+    background: none;
+    color: #d1d5db;
+
+    border: 0;
+    text-align: left;
+
+    padding: 12px;
+    border-radius: 9px;
+
+    margin: 2px 0;
+}
+
+/* Efeito ao passar o mouse e item ativo */
+
+.nav button:hover,
+.nav button.active {
+    background: #1f2937;
+    color: #fff;
+}
+
+/* Barra de rolagem no Chrome, Edge e Safari */
+
+.nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.nav::-webkit-scrollbar-track {
+    background: #111827;
+    border-radius: 10px;
+}
+
+.nav::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 10px;
+}
+
+.nav::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+/* ==============================
+   BOTÃO SAIR
+============================== */
+
+.logout {
+    /* Removido o position: absolute */
+    margin-top: 15px;
+    
+    /* Mantém o botão fixo na parte inferior, fora da área de rolagem */
+    flex-shrink: 0;
+    width: 100%;
+}
+
+/* ==============================
+   CONTEÚDO PRINCIPAL
+============================== */
+
+.main {
+    margin-left: 245px;
+    width: calc(100% - 245px);
+    padding: 28px;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 27px;
+}
+
+.muted {
+    color: var(--muted);
+}
+
+.user-info {
+    text-align: right;
+    font-size: 13px;
+}
+
+/* ==============================
+   CARDS
+============================== */
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.metric {
+    font-size: 28px;
+    font-weight: 800;
+    margin-top: 7px;
+}
+
+/* ==============================
+   SEÇÕES
+============================== */
+
+.section {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.section-head h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+/* ==============================
+   TABELAS
+============================== */
+
+.table-wrap {
+    overflow: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+th {
+    color: var(--muted);
+    font-weight: 700;
+    background: #fafafa;
+}
+
+/* ==============================
+   ETIQUETAS
+============================== */
+
+.badge {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.badge-green {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-red {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-blue {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+/* ==============================
+   GRIDS
+============================== */
+
+.grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+/* ==============================
+   MODAIS
+============================== */
+
+.modal {
+    position: fixed;
+    inset: 0;
+
+    background: #0008;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+    z-index: 50;
+}
+
+.modal-card {
+    width: 100%;
+    max-width: 1050px;
+
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close {
+    border: 0;
+    background: #f3f4f6;
+    border-radius: 8px;
+    width: 35px;
+    height: 35px;
+    font-size: 20px;
+}
+
+/* ==============================
+   ESTADOS
+============================== */
+
+.empty {
+    padding: 35px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.loading {
+    padding: 20px;
+    text-align: center;
+    color: var(--muted);
+}
+
+/* ==============================
+   RESPONSIVIDADE
+============================== */
+
+@media (max-width: 900px) {
+    .cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ==============================
+   TABLETS E CELULARES
+============================== */
+
+@media (max-width: 700px) {
+
+    .sidebar {
+        width: 70px;
+        padding: 15px 8px;
+    }
+
+    .brand {
+        font-size: 0;
+        text-align: center;
+    }
+
+    .brand:before {
+        content: "GL";
+        font-size: 20px;
+    }
+
+    .brand small {
+        display: none;
+    }
+
+    .nav {
+        padding-right: 0;
+    }
+
+    .nav button {
+        font-size: 0;
+        text-align: center;
+        padding: 12px 4px;
+    }
+
+    .nav button:first-letter {
+        font-size: 20px;
+    }
+
+    .logout {
+        width: 100%;
+        padding: 11px 4px;
+        font-size: 0;
+    }
+
+    .logout:before {
+        content: "↪";
+        font-size: 20px;
+    }
+
+    .main {
+        margin-left: 70px;
+        width: calc(100% - 70px);
+        padding: 18px 12px;
+    }
+
+    .grid2 {
+        grid-template-columns: 1fr;
+    }
+
+    .topbar {
+        align-items: flex-start;
+    }
+
+    .user-info {
+        display: none;
+    }
+
+    .modal {
+        padding: 10px;
+    }
+
+    .modal-card {
+        max-width: 100%;
+        padding: 18px;
+        max-height: 94vh;
+    }
+}
+
+/* ==============================
+   CELULARES PEQUENOS
+============================== */
+
+@media (max-width: 500px) {
+
+    .cards {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .card {
+        padding: 14px;
+    }
+
+    .metric {
+        font-size: 22px;
+    }
+
+    h1 {
+        font-size: 23px;
+    }
+}
+
+/* ==============================
+   DETALHES DO PRODUTO
+   CATÁLOGO
+============================== */
+
+.catalog-product-detail {
+    padding: 20px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Imagem do produto */
+
+.catalog-product-detail .catalog-product-image {
+    width: 100%;
+    height: 300px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #f4f5f7;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.catalog-product-detail .catalog-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* Informações do produto */
+
+.catalog-product-detail .catalog-product-info {
+    width: 100%;
+}
+
+.catalog-product-detail .catalog-product-info h2 {
+    margin: 0 0 8px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #242936;
+}
+
+.catalog-product-detail .catalog-product-info > p {
+    margin: 0 0 18px;
+    color: #687180;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Campos do formulário */
+
+.catalog-product-detail .catalog-form-group {
+    margin-bottom: 15px;
+}
+
+.catalog-product-detail .catalog-form-group label {
+    display: block;
+    margin: 0 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4a5260;
+}
+
+.catalog-product-detail .catalog-form-group select,
+.catalog-product-detail .catalog-form-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 11px 12px;
+
+    border: 1px solid #d8dce4;
+    border-radius: 8px;
+
+    background: #fff;
+    font-size: 13px;
+    outline: none;
+}
+
+.catalog-product-detail .catalog-form-group select:focus,
+.catalog-product-detail .catalog-form-group textarea:focus {
+    border-color: #5145cd;
+}
+
+.catalog-product-detail .catalog-form-group textarea {
+    min-height: 85px;
+    resize: vertical;
+}
+
+/* Preço da variação selecionada */
+
+#catalogSelectedPrice {
+    margin: 5px 0 15px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #303643;
+}
+
+/* Quantidade */
+
+.catalog-product-detail .catalog-quantity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 5px 0 18px;
+}
+
+.catalog-product-detail .catalog-quantity button {
+    width: 34px;
+    height: 34px;
+
+    padding: 0;
+
+    border: 1px solid #d8dce4;
+    border-radius: 7px;
+
+    background: #fff;
+    color: #303643;
+
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.catalog-product-detail .catalog-quantity span {
+    min-width: 30px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Botão principal do catálogo */
+
+.catalog-product-detail .catalog-primary {
+    width: 100%;
+    min-height: 44px;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: #5145cd;
+    color: #fff;
+
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.catalog-product-detail .catalog-primary:hover {
+    background: #4338ca;
+}
+
+/* Imagem da variação selecionada */
+
+#catalogSelectedVariationImage {
+    margin: 10px 0 15px;
+
+    display: flex;
+    justify-content: flex-start;
+}
+
+#catalogSelectedVariationImage img {
+    width: 120px;
+    height: 120px;
+
+    object-fit: contain;
+
+    border: 1px solid #e0e3e9;
+    border-radius: 8px;
+
+    background: #f7f8fb;
+}
+
+/* ==============================
+   RESPONSIVIDADE DO CATÁLOGO
+============================== */
+
+@media (max-width: 650px) {
+
+    .catalog-product-detail {
+        padding: 15px;
+        gap: 15px;
+    }
+
+    .catalog-product-detail .catalog-product-image {
+        height: 230px;
+    }
+
+    .catalog-product-detail .catalog-product-info h2 {
+        font-size: 21px;
+    }
+}

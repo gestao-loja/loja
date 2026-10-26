@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#6c4df6">
+  <title>Personaliza Studio — Editor PRO</title>
+  <link rel="stylesheet" href="editor.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#" aria-label="Personaliza Studio">
+    <span class="brand-mark">✦</span>
+    <span>Personaliza<span class="brand-accent">Studio</span></span>
+  </a>
+  <input id="projectName" class="project-name" value="Minha arte" aria-label="Nome do projeto">
+  <div class="top-actions">
+    <button id="undoBtn" class="icon-button" title="Desfazer (Ctrl+Z)">↶</button>
+    <button id="redoBtn" class="icon-button" title="Refazer (Ctrl+Y)">↷</button>
+    <button id="darkModeBtn" class="icon-button" title="Modo escuro">🌙</button>
+    <button id="openProjectBtn" class="secondary" title="Abrir projeto">📂 Abrir</button>
+    <button id="saveProjectBtn" class="secondary" title="Salvar projeto">💾 Projeto</button>
+    <a id="backToCatalogBtn" class="back-button" href="catalogo.html">
+      <span class="back-arrow">←</span>
+      <span>Voltar ao catálogo</span>
+    </a>
+    <button id="exportBtn" class="primary">📥 Salvar PNG</button>
+    <input id="projectInput" type="file" accept=".json,application/json" hidden>
+  </div>
+</header>
+
+<div class="app-shell">
+  <nav class="tool-rail" aria-label="Ferramentas">
+    <button class="rail-button active" data-panel="design" title="Modelos"><span>▦</span><small>Modelos</small></button>
+    <button class="rail-button" data-panel="arts" title="Artes Prontas"><span>🎨</span><small>Artes</small></button>
+    <button class="rail-button" data-panel="text" title="Texto"><span>T</span><small>Texto</small></button>
+    <button class="rail-button" data-panel="elements" title="Elementos"><span>◇</span><small>Formas</small></button>
+    <button class="rail-button" data-panel="decor" title="Decorações"><span>✿</span><small>Decorações</small></button>
+    <button class="rail-button" data-panel="icons" title="Ícones"><span>★</span><small>Ícones</small></button>
+    <button class="rail-button" data-panel="uploads" title="Uploads"><span>↑</span><small>Uploads</small></button>
+    <button class="rail-button" data-panel="draw" title="Desenho"><span>✎</span><small>Desenho</small></button>
+    <button class="rail-button" data-panel="background" title="Fundo"><span>◐</span><small>Fundo</small></button>
+    <button class="rail-button" data-panel="effects" title="Filtros"><span>✨</span><small>Efeitos</small></button>
+    <button class="rail-button" data-panel="arrange" title="Alinhar"><span>⊞</span><small>Alinhar</small></button>
+    <button class="rail-button" data-panel="resize" title="Tamanho"><span>↔</span><small>Tamanho</small></button>
+  </nav>
+
+  <aside class="sidebar">
+    <!-- MODELOS -->
+    <div class="panel" data-panel-content="design">
+      <div class="panel-heading"><h2>Modelos</h2><p>Comece com um layout e personalize.</p></div>
+      <label class="searchbox">⌕ <input id="templateSearch" placeholder="Buscar modelos"></label>
+      <div id="templateGrid" class="template-grid">
+        <button class="template-card" data-template="birthday"><span class="template-art birthday">Feliz<br><b>ANIVERSÁRIO</b> ✦</span><strong>Aniversário</strong></button>
+        <button class="template-card" data-template="minimal"><span class="template-art minimal">feito com<br><b>amor ♡</b></span><strong>Minimalista</strong></button>
+        <button class="template-card" data-template="floral"><span class="template-art floral">❀<br><b>Especial</b></span><strong>Floral</strong></button>
+        <button class="template-card" data-template="bold"><span class="template-art bold">YOUR<br><b>DESIGN</b></span><strong>Tipográfico</strong></button>
+        <button class="template-card" data-template="sale"><span class="template-art sale">SUPER<br><b>OFERTA</b></span><strong>Promoção</strong></button>
+        <button class="template-card" data-template="wedding"><span class="template-art wedding">Nosso<br><b>CASAMENTO</b></span><strong>Casamento</strong></button>
+        <button class="template-card" data-template="baby"><span class="template-art baby">Bem-vindo<br><b>BEBÊ</b> 👶</span><strong>Chá de bebê</strong></button>
+        <button class="template-card" data-template="graduation"><span class="template-art graduation">🎓<br><b>FORMATURA</b></span><strong>Formatura</strong></button>
+      </div>
+      <div class="tip-card"><b>Dica</b><p>Use os atalhos Ctrl+Z / Ctrl+Y para desfazer e refazer.</p></div>
+    </div>
+
+    <!-- ARTES PRONTAS -->
+    <div class="panel hidden" data-panel-content="arts">
+      <div class="panel-heading">
+        <h2>Artes Prontas</h2>
+        <p>Escolha uma arte e adicione ao seu projeto.</p>
+      </div>
+
+      <label class="searchbox">⌕ <input id="artSearch" placeholder="Buscar arte..."></label>
+
+      <div class="category-chips" id="artCategories">
+        <button class="chip active" data-cat="all">Todas</button>
+      </div>
+
+      <div id="artsGrid" class="arts-grid">
+        <p class="muted-note">Carregando artes...</p>
+      </div>
+    </div>
+
+    <!-- TEXTO -->
+    <div class="panel hidden" data-panel-content="text">
+      <div class="panel-heading"><h2>Texto</h2><p>Crie títulos e mensagens personalizadas.</p></div>
+      <button id="addHeading" class="add-tile"><b>Tt</b><span><strong>Adicionar título</strong><small>Texto grande para destaque</small></span><i>＋</i></button>
+      <button id="addSubheading" class="add-tile"><b>T</b><span><strong>Adicionar subtítulo</strong><small>Uma linha de apoio</small></span><i>＋</i></button>
+      <button id="addBodyText" class="add-tile"><b>≡</b><span><strong>Adicionar texto corrido</strong><small>Mensagens e detalhes</small></span><i>＋</i></button>
+      <button id="add3DText" class="add-tile"><b>3D</b><span><strong>Texto 3D</strong><small>Com profundidade e sombra</small></span><i>＋</i></button>
+      <button id="addStrokeText" class="add-tile"><b>O</b><span><strong>Texto contornado</strong><small>Só contorno, sem preenchimento</small></span><i>＋</i></button>
+      <button id="addShadowText" class="add-tile"><b>◑</b><span><strong>Texto com sombra</strong><small>Efeito elevado</small></span><i>＋</i></button>
+      <div class="tip-card"><b>Atalho</b><p>Duplo clique em um texto na tela para editar direto.</p></div>
+    </div>
+
+    <!-- ELEMENTOS -->
+    <div class="panel hidden" data-panel-content="elements">
+      <div class="panel-heading"><h2>Formas</h2><p>Formas geométricas prontas.</p></div>
+      <div class="element-grid">
+        <button data-add="rect"><span class="shape-preview rectangle"></span>Retângulo</button>
+        <button data-add="circle"><span class="shape-preview circle"></span>Círculo</button>
+        <button data-add="triangle"><span class="shape-preview triangle"></span>Triângulo</button>
+        <button data-add="star"><span class="shape-preview star">★</span>Estrela</button>
+        <button data-add="heart"><span class="shape-preview heart">♥</span>Coração</button>
+        <button data-add="line"><span class="shape-preview line"></span>Linha</button>
+        <button data-add="hexagon"><span class="shape-preview hex">⬡</span>Hexágono</button>
+        <button data-add="pentagon"><span class="shape-preview penta">⬠</span>Pentágono</button>
+        <button data-add="diamond"><span class="shape-preview diam">◆</span>Losango</button>
+        <button data-add="arrow"><span class="shape-preview arrow">➤</span>Seta</button>
+        <button data-add="cross"><span class="shape-preview">✚</span>Cruz</button>
+        <button data-add="burst"><span class="shape-preview">✺</span>Explosão</button>
+      </div>
+    </div>
+
+    <!-- DECORAÇÕES -->
+    <div class="panel hidden" data-panel-content="decor">
+      <div class="panel-heading"><h2>Decorações</h2><p>Ornamentos e detalhes decorativos.</p></div>
+      <div class="decor-grid" id="decorGrid"></div>
+    </div>
+
+    <!-- ÍCONES -->
+    <div class="panel hidden" data-panel-content="icons">
+      <div class="panel-heading"><h2>Ícones</h2><p>+216 ícones organizados por categoria.</p></div>
+      <label class="searchbox">⌕ <input id="iconSearch" placeholder="Buscar ícone"></label>
+      <div class="icon-picker" id="iconPicker">
+        <h3 class="subheading">Formas</h3>
+        <div class="icon-grid" data-icons="shapes"></div>
+        <h3 class="subheading">Rostos</h3>
+        <div class="icon-grid" data-icons="faces"></div>
+        <h3 class="subheading">Natureza</h3>
+        <div class="icon-grid" data-icons="nature"></div>
+        <h3 class="subheading">Comida</h3>
+        <div class="icon-grid" data-icons="food"></div>
+        <h3 class="subheading">Objetos</h3>
+        <div class="icon-grid" data-icons="objects"></div>
+        <h3 class="subheading">Símbolos</h3>
+        <div class="icon-grid" data-icons="symbols"></div>
+        <h3 class="subheading">Setas</h3>
+        <div class="icon-grid" data-icons="arrows"></div>
+        <h3 class="subheading">Transporte</h3>
+        <div class="icon-grid" data-icons="transport"></div>
+        <h3 class="subheading">Esporte</h3>
+        <div class="icon-grid" data-icons="sports"></div>
+      </div>
+    </div>
+
+    <!-- UPLOADS -->
+    <div class="panel hidden" data-panel-content="uploads">
+      <div class="panel-heading"><h2>Uploads</h2><p>Adicione fotos, logos e artes do seu computador.</p></div>
+      <button id="uploadButton" class="upload-drop"><span>↑</span><b>Enviar arquivos</b><small>PNG, JPG, WEBP e SVG</small></button>
+      <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" multiple hidden>
+      <div id="uploadList" class="upload-list"></div>
+      <p class="muted-note">Use imagens que você tenha autorização para utilizar.</p>
+    </div>
+
+    <!-- DESENHO -->
+    <div class="panel hidden" data-panel-content="draw">
+      <div class="panel-heading"><h2>Desenho</h2><p>Pincel livre, borracha e conta-gotas.</p></div>
+      <div class="draw-tools">
+        <button class="draw-tool active" data-tool="select" title="Selecionar">🎯<span>Selecionar</span></button>
+        <button class="draw-tool" data-tool="brush" title="Pincel">🖌️<span>Pincel</span></button>
+        <button class="draw-tool" data-tool="eraser" title="Borracha">🧽<span>Borracha</span></button>
+        <button class="draw-tool" data-tool="line" title="Linha">📏<span>Linha</span></button>
+        <button class="draw-tool" data-tool="rect-draw" title="Retângulo">▭<span>Retângulo</span></button>
+        <button class="draw-tool" data-tool="circle-draw" title="Círculo">◯<span>Círculo</span></button>
+        <button class="draw-tool" data-tool="eyedropper" title="Conta-gotas">💧<span>Conta-gotas</span></button>
+      </div>
+      <div id="brushOptions" class="hidden">
+        <label class="control-label">Cor do pincel
+          <input id="brushColor" type="color" value="#6c4df6">
+        </label>
+        <label class="control-label">Tamanho: <span id="brushSizeVal">8</span>px
+          <input id="brushSize" type="range" min="1" max="120" value="8">
+        </label>
+        <label class="control-label">Opacidade: <span id="brushOpacityVal">100</span>%
+          <input id="brushOpacity" type="range" min="1" max="100" value="100">
+        </label>
+        <label class="control-label">Suavização
+          <input id="brushSmooth" type="range" min="0" max="10" value="3">
+        </label>
+      </div>
+      <button class="wide-button" id="clearDrawings">🗑️ Limpar desenhos</button>
+    </div>
+
+    <!-- FUNDO -->
+    <div class="panel hidden" data-panel-content="background">
+      <div class="panel-heading"><h2>Fundo</h2><p>Cor sólida, gradiente ou transparente.</p></div>
+      <div class="toggle-row">
+        <button class="toggle-tab active" data-bg-mode="solid">Sólida</button>
+        <button class="toggle-tab" data-bg-mode="gradient">Gradiente</button>
+        <button class="toggle-tab" data-bg-mode="radial">Radial</button>
+      </div>
+      <div id="bgSolid">
+        <label class="control-label">Cor do fundo <input id="backgroundColor" type="color" value="#ffffff"></label>
+      </div>
+      <div id="bgGradient" class="hidden">
+        <div class="form-two">
+          <label class="control-label">Cor 1 <input id="bgGrad1" type="color" value="#6c4df6"></label>
+          <label class="control-label">Cor 2 <input id="bgGrad2" type="color" value="#ff6b9a"></label>
+        </div>
+        <label class="control-label">Ângulo
+          <input id="bgGradAngle" type="range" min="0" max="360" value="135">
+        </label>
+      </div>
+      <div id="bgRadial" class="hidden">
+        <div class="form-two">
+          <label class="control-label">Centro <input id="bgRad1" type="color" value="#6c4df6"></label>
+          <label class="control-label">Borda <input id="bgRad2" type="color" value="#ff6b9a"></label>
+        </div>
+      </div>
+      <h3 class="subheading">Gradientes prontos</h3>
+      <div class="grad-presets" id="gradPresets"></div>
+      <button id="transparentBackground" class="wide-button">🫥 Fundo transparente</button>
+    </div>
+
+    <!-- EFEITOS -->
+    <div class="panel hidden" data-panel-content="effects">
+      <div class="panel-heading"><h2>Efeitos</h2><p>Filtros de imagem e efeitos.</p></div>
+
+      <h3 class="subheading">Filtros de imagem</h3>
+      <p class="muted-note">Selecione uma imagem para aplicar filtros.</p>
+      <div class="filter-grid">
+        <button data-filter="gray">P&B</button>
+        <button data-filter="sepia">Sépia</button>
+        <button data-filter="invert">Inverter</button>
+        <button data-filter="blur">Desfoque</button>
+        <button data-filter="bright">+ Brilho</button>
+        <button data-filter="dark">− Brilho</button>
+        <button data-filter="contrast">Contraste</button>
+        <button data-filter="saturate">Saturação</button>
+        <button data-filter="reset">Resetar</button>
+      </div>
+
+      <h3 class="subheading">Efeitos de elemento</h3>
+      <label class="control-label">Sombra
+        <input id="shadowRange" type="range" min="0" max="40" value="0">
+      </label>
+      <div class="form-two">
+        <label class="control-label">Cor <input id="shadowColor" type="color" value="#000000"></label>
+        <label class="control-label">Desfoque <input id="shadowBlur" type="range" min="0" max="40" value="10"></label>
+      </div>
+      <label class="control-label">Contorno
+        <input id="strokeRange" type="range" min="0" max="20" value="0">
+      </label>
+      <label class="control-label">Cor contorno <input id="strokeColor" type="color" value="#222222"></label>
+      <label class="control-label">Brilho
+        <input id="glowRange" type="range" min="0" max="40" value="0">
+      </label>
+
+      <h3 class="subheading">Blend mode (camadas)</h3>
+      <label class="control-label">Modo
+        <select id="blendMode">
+          <option value="source-over">Normal</option>
+          <option value="multiply">Multiplicar</option>
+          <option value="screen">Tela</option>
+          <option value="overlay">Sobrepor</option>
+          <option value="darken">Escurecer</option>
+          <option value="lighten">Clarear</option>
+          <option value="color-dodge">Subexposição</option>
+          <option value="color-burn">Superexposição</option>
+          <option value="hard-light">Luz forte</option>
+          <option value="soft-light">Luz suave</option>
+          <option value="difference">Diferença</option>
+          <option value="exclusion">Exclusão</option>
+        </select>
+      </label>
+
+      <button class="wide-button" id="resetEffects">Limpar efeitos</button>
+    </div>
+
+    <!-- ALINHAR -->
+    <div class="panel hidden" data-panel-content="arrange">
+      <div class="panel-heading"><h2>Alinhar</h2><p>Alinhe, distribua e organize.</p></div>
+      <h3 class="subheading">Horizontal</h3>
+      <div class="align-grid">
+        <button data-align="left" title="Esquerda">⇤</button>
+        <button data-align="center-h" title="Centro H">⇔</button>
+        <button data-align="right" title="Direita">⇥</button>
+      </div>
+      <h3 class="subheading">Vertical</h3>
+      <div class="align-grid">
+        <button data-align="top" title="Topo">⤒</button>
+        <button data-align="center-v" title="Centro V">⇕</button>
+        <button data-align="bottom" title="Base">⤓</button>
+      </div>
+      <h3 class="subheading">Distribuir</h3>
+      <div class="align-grid">
+        <button data-align="dist-h" title="Distribuir H">≡</button>
+        <button data-align="dist-v" title="Distribuir V">⋮</button>
+        <button data-align="center-canvas" title="Centro canvas">⊕</button>
+      </div>
+      <h3 class="subheading">Ações</h3>
+      <button class="wide-button" id="groupBtn">🔗 Agrupar (Ctrl+G)</button>
+      <button class="wide-button" id="ungroupBtn">✂ Desagrupar</button>
+      <button class="wide-button" id="lockBtn">🔒 Bloquear/Desbloquear</button>
+      <button class="wide-button" id="flipHBtn">⇋ Inverter H</button>
+      <button class="wide-button" id="flipVBtn">⇅ Inverter V</button>
+      <button class="wide-button" id="hideAllBtn">👁️ Ocultar todos</button>
+      <button class="wide-button" id="showAllBtn">👁️ Mostrar todos</button>
+    </div>
+
+    <!-- TAMANHO -->
+    <div class="panel hidden" data-panel-content="resize">
+      <div class="panel-heading"><h2>Tamanho da arte</h2><p>Defina a área de criação em pixels.</p></div>
+      <label class="control-label">Formato
+        <select id="preset">
+          <option value="mug">Caneca — 1240 × 561</option>
+          <option value="shirt">Camiseta — 1476 × 1772</option>
+          <option value="tile">Azulejo — 1181 × 1181</option>
+          <option value="photo">Foto — 591 × 886</option>
+          <option value="banner">Banner — 1920 × 1080</option>
+          <option value="card">Cartão — 1050 × 600</option>
+          <option value="story">Story — 1080 × 1920</option>
+          <option value="post">Post — 1080 × 1080</option>
+          <option value="custom">Personalizado</option>
+        </select>
+      </label>
+      <div class="form-two">
+        <label class="control-label">Largura (px)<input id="canvasW" type="number" min="100" max="5000" value="1240"></label>
+        <label class="control-label">Altura (px)<input id="canvasH" type="number" min="100" max="5000" value="561"></label>
+      </div>
+      <button id="applySize" class="primary wide-button">Aplicar tamanho</button>
+      <label class="control-label">Grade (tamanho)
+        <input id="gridSize" type="range" min="10" max="200" value="50">
+      </label>
+      <button class="wide-button" id="showRulersBtn">📏 Mostrar réguas</button>
+      <button class="wide-button" id="clearGuidesBtn">Limpar guias manuais</button>
+    </div>
+  </aside>
+
+  <main class="editor">
+    <div class="editor-toolbar">
+      <div class="toolbar-group">
+        <button id="zoomOut" title="Diminuir zoom">−</button>
+        <span id="zoomLabel">100%</span>
+        <button id="zoomIn" title="Aumentar zoom">＋</button>
+        <button id="fitCanvas" title="Ajustar à tela">Ajustar</button>
+      </div>
+      <div class="toolbar-group">
+        <button id="duplicateBtn" title="Duplicar (Ctrl+D)">📋 Duplicar</button>
+        <button id="deleteToolbarBtn" title="Excluir (Del)">🗑️ Excluir</button>
+      </div>
+      <div class="toolbar-group">
+        <button id="gridToggle" title="Grade">▦</button>
+        <button id="snapToggle" class="active" title="Ímãs">🧲</button>
+        <button id="propLockToggle" title="Bloquear proporção">🔒</button>
+        <button id="rotationSnapToggle" class="active" title="Snap de rotação">📐</button>
+      </div>
+      <div class="toolbar-group right-tools">
+        <span class="live-dot"></span>
+        <span id="saveState">Alterações locais</span>
+      </div>
+    </div>
+
+    <div id="stage" class="stage">
+      <div id="rulerH" class="ruler ruler-h hidden"></div>
+      <div id="rulerV" class="ruler ruler-v hidden"></div>
+      <div id="canvasFrame" class="canvas-frame">
+        <canvas id="artboard" width="1240" height="561"></canvas>
+        <canvas id="drawLayer" class="draw-layer"></canvas>
+        <div id="guides" class="guides"></div>
+      </div>
+    </div>
+
+    <footer class="editor-footer">
+      <span id="status">Tudo pronto para criar.</span>
+      <span id="mouseCoords"></span>
+      <span id="selectionInfo"></span>
+      <span id="dimensions">1240 × 561 px</span>
+    </footer>
+  </main>
+
+  <aside class="inspector">
+    <div class="inspector-header">
+      <h2>Propriedades</h2>
+      <span id="selectedType" class="type-pill">Nenhum item</span>
+    </div>
+    <div id="emptyInspector" class="empty-inspector">
+      <div class="empty-icon">✦</div>
+      <b>Selecione um elemento</b>
+      <p>Clique em um texto, forma ou imagem para editar.</p>
+    </div>
+    <div id="inspectorControls" class="inspector-controls hidden">
+      <label class="control-label">Nome da camada<input id="layerName" type="text"></label>
+
+      <label id="textControl" class="control-label">Texto<textarea id="textValue" rows="3"></textarea></label>
+
+      <label id="fontControl" class="control-label">Fonte
+        <select id="fontFamily">
+          <option value="Arial">Arial</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Impact">Impact</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Trebuchet MS">Trebuchet MS</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Comic Sans MS">Comic Sans MS</option>
+          <option value="Poppins, Arial">Poppins</option>
+          <option value="Montserrat, Arial">Montserrat</option>
+          <option value="Roboto, Arial">Roboto</option>
+          <option value="Playfair Display, Georgia">Playfair</option>
+          <option value="Dancing Script, cursive">Dancing</option>
+          <option value="Pacifico, cursive">Pacifico</option>
+          <option value="Lobster, cursive">Lobster</option>
+          <option value="Bebas Neue, Arial">Bebas Neue</option>
+          <option value="Oswald, Arial">Oswald</option>
+          <option value="Caveat, cursive">Caveat</option>
+        </select>
+      </label>
+
+      <div id="textOptions">
+        <div class="form-two">
+          <label class="control-label">Tam.<input id="fontSize" type="number" min="6" max="500" value="48"></label>
+          <label class="control-label">Alinhar
+            <select id="textAlign">
+              <option value="center">Centro</option>
+              <option value="left">Esquerda</option>
+              <option value="right">Direita</option>
+            </select>
+          </label>
+        </div>
+        <label class="control-label">Espaço letras
+          <input id="letterSpacing" type="range" min="-10" max="40" value="0">
+        </label>
+        <label class="control-label">Altura linha
+          <input id="lineHeight" type="range" min="0.8" max="3" step="0.1" value="1.2">
+        </label>
+        <label class="control-label">Curvatura
+          <input id="textCurve" type="range" min="-100" max="100" value="0">
+        </label>
+        <div class="style-row">
+          <button id="boldBtn"><b>B</b></button>
+          <button id="italicBtn"><i>I</i></button>
+          <button id="underlineBtn"><u>U</u></button>
+          <button id="uppercaseBtn">AA</button>
+        </div>
+      </div>
+
+      <div class="form-two">
+        <label class="control-label">Cor<input id="objectColor" type="color" value="#222222"></label>
+        <label class="control-label">Opacidade <input id="opacity" type="range" min="0" max="100" value="100"></label>
+      </div>
+
+      <div id="gradientControl" class="hidden">
+        <div class="toggle-row">
+          <button class="toggle-tab active" data-fill-mode="solid">Sólido</button>
+          <button class="toggle-tab" data-fill-mode="gradient">Gradiente</button>
+        </div>
+        <div id="fillGradient" class="hidden">
+          <div class="form-two">
+            <label class="control-label">Cor 1<input id="fillGrad1" type="color" value="#6c4df6"></label>
+            <label class="control-label">Cor 2<input id="fillGrad2" type="color" value="#ff6b9a"></label>
+          </div>
+          <label class="control-label">Ângulo
+            <input id="fillGradAngle" type="range" min="0" max="360" value="135">
+          </label>
+        </div>
+      </div>
+
+      <div id="radiusControl" class="hidden">
+        <label class="control-label">Cantos arredondados
+          <input id="cornerRadius" type="range" min="0" max="200" value="0">
+        </label>
+      </div>
+
+      <div class="form-two">
+        <label class="control-label">Posição X<input id="posX" type="number"></label>
+        <label class="control-label">Posição Y<input id="posY" type="number"></label>
+      </div>
+      <div class="form-two">
+        <label class="control-label">Largura<input id="objW" type="number" min="1"></label>
+        <label class="control-label">Altura<input id="objH" type="number" min="1"></label>
+      </div>
+      <label class="control-label">Rotação <span id="rotationLabel">0°</span>
+        <input id="rotation" type="range" min="-180" max="180" value="0">
+      </label>
+
+      <div class="layer-actions">
+        <button id="sendBackBtn">Enviar p/ trás</button>
+        <button id="bringFrontBtn">Trazer à frente</button>
+      </div>
+      <div class="layer-actions">
+        <button id="sendBackOneBtn">−1 nível</button>
+        <button id="bringFrontOneBtn">+1 nível</button>
+      </div>
+      <button id="deleteBtn" class="danger-button">🗑️ Excluir elemento</button>
+    </div>
+
+    <div class="layers-section">
+      <div class="layers-title">
+        <h3>Camadas</h3>
+        <span id="layerCount">0</span>
+      </div>
+      <div id="layersList" class="layers-list"><p class="muted-note">Seus elementos aparecerão aqui.</p></div>
+    </div>
+  </aside>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<input id="textEditInput" class="text-edit-inline hidden" type="text">
+<script src="editor.js"></script>
+</body>
+</html>

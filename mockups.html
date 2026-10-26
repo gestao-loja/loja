@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mockup Studio 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">Mockup <span>Studio</span></div>
+        <div class="top-actions">
+            <button class="btn" id="resetBtn"><i class="fa-solid fa-rotate-left"></i> Reiniciar</button>
+            <button class="btn primary" id="exportBtn"><i class="fa-solid fa-camera"></i> Salvar Mockup</button>
+        </div>
+    </header>
+
+    <main class="app-container">
+        <section class="workspace">
+            <div id="three-container"></div>
+            <div class="stage-tools">
+                <button class="icon-btn" id="zoomIn" title="Aumentar Zoom"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                <button class="icon-btn" id="zoomOut" title="Diminuir Zoom"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+            </div>
+            <div class="scene-label">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Visualização 3D
+            </div>
+        </section>
+
+        <aside class="sidebar">
+            <h2>Configurações</h2>
+
+            <div class="field">
+                <label for="productSelect">Produto</label>
+                <select id="productSelect">
+                    <option value="mug">Caneca</option>
+                    <option value="t-shirt">Camiseta</option>
+                    <option value="tile">Azulejo</option>
+                </select>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="art"><i class="fa-solid fa-palette"></i> Arte</button>
+                <button class="tab" data-tab="product"><i class="fa-solid fa-box-open"></i> Produto</button>
+                <button class="tab" data-tab="background"><i class="fa-solid fa-image"></i> Fundo</button>
+            </div>
+
+            <!-- Painel de Arte -->
+            <section id="panel-art">
+                <h3>Adicionar Arte</h3>
+                <div class="field upload">
+                    <label class="btn primary" for="artUpload"><i class="fa-solid fa-upload"></i> Carregar Imagem</label>
+                    <input id="artUpload" type="file" accept="image/*" hidden>
+                    <button class="btn" id="removeArt">Remover</button>
+                </div>
+                <p class="small">A arte será aplicada como textura no produto. Use imagens PNG com fundo transparente.</p>
+                <hr class="divider">
+                <h3>Ajustes da Textura</h3>
+                <div class="range-row"><span>Escala</span><strong id="scaleValue">100%</strong></div>
+                <input type="range" id="artScale" min="20" max="300" value="100">
+                <div class="field">
+                    <label for="artRot">Rotação</label>
+                    <input type="range" id="artRot" min="0" max="360" value="0">
+                </div>
+            </section>
+
+            <!-- Painel de Produto -->
+            <section id="panel-product" hidden>
+                <h3 style="margin-bottom: 10px; color: #26354d; font-size: 15px;">Opções de Objeto</h3>
+                
+                <div style="border: 1px solid #d9e2ef; border-radius: 9px; padding: 15px; margin-bottom: 20px;">
+                    <h4 style="font-size: 13px; color: #367cff; margin-bottom: 15px;">Cores</h4>
+                    
+                    <!-- Alça -->
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <input type="color" id="colorHandle" value="#ffffff" style="width: 40px; height: 40px; border: none; border-radius: 50%; cursor: pointer;">
+                        <label for="colorHandle" style="font-size: 14px; cursor: pointer;">Alça</label>
+                    </div>
+
+                    <!-- Interior -->
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <input type="color" id="colorInterior" value="#ffffff" style="width: 40px; height: 40px; border: none; border-radius: 50%; cursor: pointer;">
+                        <label for="colorInterior" style="font-size: 14px; cursor: pointer;">Interior</label>
+                    </div>
+
+                    <!-- Área da Arte (Fundo da caneca) -->
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <input type="color" id="colorArtArea" value="#ffffff" style="width: 40px; height: 40px; border: none; border-radius: 50%; cursor: pointer;">
+                        <label for="colorArtArea" style="font-size: 14px; cursor: pointer;">Área da Arte</label>
+                    </div>
+
+                    <!-- Fundo (Base externa) -->
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <input type="color" id="colorBase" value="#ffffff" style="width: 40px; height: 40px; border: none; border-radius: 50%; cursor: pointer;">
+                        <label for="colorBase" style="font-size: 14px; cursor: pointer;">Fundo</label>
+                    </div>
+
+                    <!-- Outros (Corpo principal) -->
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="color" id="colorOther" value="#ffffff" style="width: 40px; height: 40px; border: none; border-radius: 50%; cursor: pointer;">
+                        <label for="colorOther" style="font-size: 14px; cursor: pointer;">Outros</label>
+                    </div>
+                </div>
+
+                <h3>Iluminação</h3>
+                <div class="range-row"><span>Intensidade da Luz</span><strong id="lightValue">1.0</strong></div>
+                <input type="range" id="lightIntensity" min="0.2" max="2.5" step="0.1" value="1">
+            </section>
+
+            <!-- Painel de Fundo -->
+            <section id="panel-background" hidden>
+                <h3>Fundo da Cena</h3>
+                <div class="field upload">
+                    <label class="btn" for="bgUpload"><i class="fa-solid fa-image"></i> Carregar Imagem</label>
+                    <input id="bgUpload" type="file" accept="image/*" hidden>
+                    <button class="btn" id="clearBg">Remover</button>
+                </div>
+                <p class="small">Se a imagem não cobrir a tela toda, ela será centralizada e o espaço vazio ficará com a cor escolhida abaixo.</p>
+                <hr class="divider">
+                <div class="field">
+                    <label for="bgColor">Cor de Fundo</label>
+                    <div class="color-picker-group">
+                        <input type="color" id="bgColor" value="#e2d4c3">
+                        <label>Escolha a cor</label>
+                    </div>
+                </div>
+            </section>
+        </aside>
+    </main>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module" src="mockup.js"></script>
+</body>
+</html>

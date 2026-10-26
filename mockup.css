@@ -1,0 +1,272 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --blue: #367cff;
+    --ink: #26354d;
+    --muted: #718096;
+    --line: #d9e2ef;
+    --bg: #eef2f7;
+    --panel: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg);
+    color: var(--ink);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar {
+    height: 64px;
+    flex-shrink: 0;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+    z-index: 100;
+}
+
+.brand {
+    font-weight: 800;
+    font-size: 19px;
+    letter-spacing: -0.5px;
+}
+.brand span { color: var(--blue); }
+
+.top-actions { display: flex; gap: 9px; }
+
+.btn {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    border-radius: 9px;
+    padding: 10px 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn:hover { filter: brightness(0.98); }
+.btn.primary {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+}
+
+.app-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 365px;
+    gap: 14px;
+    padding: 14px;
+    flex-grow: 1;
+    min-height: 0;
+    height: calc(100vh - 64px);
+}
+
+.workspace {
+    position: relative;
+    background: #e2d4c3;
+    border-radius: 13px;
+    overflow: hidden;
+    display: flex;
+    min-width: 0;
+}
+
+#three-container {
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    flex: 1;
+    min-width: 0;
+}
+#three-container:active { cursor: grabbing; }
+#three-container canvas { display: block; }
+
+.scene-label {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: #ffffffed;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13px;
+    box-shadow: 0 3px 12px #00000012;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.stage-tools {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.icon-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: #fff;
+    color: var(--blue);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.sidebar {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    padding: 18px;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.sidebar h2 { font-size: 17px; margin-bottom: 15px; }
+.sidebar h3 { font-size: 13px; color: var(--blue); margin: 19px 0 9px; }
+
+.field { margin-bottom: 14px; }
+.field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 7px;
+}
+
+.field select,
+.field input[type="text"],
+.field input[type="number"] {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 10px;
+    background: #fff;
+    color: var(--ink);
+}
+
+.upload { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.small { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+.tabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 14px;
+}
+.tab {
+    border: 0;
+    background: transparent;
+    padding: 9px 8px;
+    color: var(--muted);
+    font-size: 13px;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+}
+.tab.active {
+    color: var(--blue);
+    border-color: var(--blue);
+}
+
+.divider { border: 0; border-top: 1px solid #edf1f6; margin: 18px 0; }
+.range-row { display: flex; justify-content: space-between; font-size: 13px; margin: 10px 0; }
+input[type="range"] { width: 100%; accent-color: var(--blue); }
+
+.color-picker-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--line);
+    padding: 8px;
+    border-radius: 9px;
+}
+.color-picker-group input[type="color"] {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.color-picker-group label { font-size: 13px; font-weight: 500; margin: 0; }
+
+#magicMugControls { transition: opacity .2s ease; }
+#magicMugControls button:disabled,
+#magicMugControls input:disabled {
+    opacity: .45;
+    cursor: not-allowed !important;
+}
+
+.paleta-cores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    padding: 10px 0;
+    align-items: center;
+}
+.cor-preset {
+    width: 25px;
+    height: 25px;
+    min-width: 25px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, .15);
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+    transition: transform .15s, box-shadow .15s;
+}
+.cor-preset:hover { transform: scale(1.12); }
+.cor-preset.selecionada {
+    outline: 2px solid #3980ff;
+    outline-offset: 2px;
+}
+.cor-preset.selecionada::after {
+    content: "✓";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    text-shadow: 0 1px 3px #000;
+}
+.paleta-titulo {
+    width: 100%;
+    font-size: 12px;
+    color: #667085;
+    margin-bottom: 2px;
+}
+
+@media (max-width: 900px) {
+    body { overflow: auto; height: auto; min-height: 100vh; }
+    .topbar { padding: 0 14px; gap: 10px; }
+    .top-actions { flex-wrap: wrap; justify-content: flex-end; }
+    .app-container {
+        grid-template-columns: minmax(0, 1fr);
+        height: auto;
+        min-height: calc(100vh - 64px);
+    }
+    .workspace { min-height: 55vh; }
+    #three-container { min-height: 55vh; }
+    .sidebar { max-height: none; overflow: visible; }
+}
+
+@media (max-width: 480px) {
+    .topbar { height: auto; min-height: 64px; padding: 10px; align-items: flex-start; }
+    .brand { font-size: 16px; }
+    .btn { padding: 8px 9px; font-size: 12px; }
+    .app-container { padding: 8px; gap: 8px; }
+    .sidebar { padding: 13px; }
+}

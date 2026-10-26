@@ -1,0 +1,218 @@
+/* Financeiro: complementa o styles.css original sem substituir o layout global. */
+.finance-page{max-width:1240px;margin:0 auto}
+.finance-page .page-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px}
+.finance-page .eyebrow{margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.12em;color:#166534}
+.finance-page h1{margin:0;font-size:27px;line-height:1.2}
+.finance-page .subtitle{margin:8px 0 0;color:var(--muted);font-size:14px}
+.finance-page .card{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:20px;margin-bottom:20px}
+.finance-page .section-header{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:18px}
+.finance-page .section-header h2{margin:0;font-size:18px}
+.finance-page .section-header p{margin:7px 0 0;color:var(--muted);font-size:13px}
+.finance-page .btn-light{background:#fff;color:#334155;border:1px solid var(--border);border-radius:10px;padding:10px 15px;font-weight:700;cursor:pointer}
+.finance-page .btn-primary{background:var(--primary);color:#fff;border:0;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}
+.finance-page .btn-primary:disabled,
+.finance-page .btn-light:disabled{opacity:.6;cursor:not-allowed}
+.finance-page .filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 14px}
+.finance-page .filters label,
+.finance-page .compact-label{display:block;min-width:0;margin:0 0 14px;font-size:12px;font-weight:700;color:#475569}
+.finance-page .filters input,
+.finance-page .filters select,
+.finance-page .compact-label select{display:block;width:100%;height:40px;margin-top:6px;padding:8px 11px;border:1px solid #d8dee8;border-radius:9px;background:#fff;color:#172033;font-size:13px}
+.finance-page .filter-button{display:flex;align-items:flex-end;margin-bottom:14px}
+.finance-page .filter-button .btn{width:100%;height:40px}
+.finance-page .period-caption{margin:0;color:var(--muted);font-size:12px}
+
+/* 5 cards no topo */
+.finance-page .metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.finance-page .metric{min-width:0;background:#fff;border:1px solid var(--border);border-radius:15px;padding:18px}
+.finance-page .metric span{display:block;color:#64748b;font-size:12px;font-weight:700}
+.finance-page .metric strong{display:block;margin:10px 0;font-size:22px;line-height:1.2;color:#111827;overflow-wrap:anywhere}
+.finance-page .metric small{color:var(--muted);font-size:11px}
+.finance-page .metric-featured{background:#17603e;border-color:#17603e;color:#fff}
+.finance-page .metric-featured span,
+.finance-page .metric-featured strong,
+.finance-page .metric-featured small{color:#fff}
+
+/* Card de estornos (laranja) */
+.finance-page .metric-reversal{background:#fff7ed;border-color:#fdba74}
+.finance-page .metric-reversal span,
+.finance-page .metric-reversal strong{color:#c2410c}
+.finance-page .metric-reversal small{color:#9a3412}
+
+.finance-page .compact-label{width:135px;margin:0}
+.finance-page .table-wrap{width:100%;overflow:auto}
+.finance-page table{width:100%;min-width:700px;border-collapse:collapse}
+.finance-page th,
+.finance-page td{padding:12px;border-bottom:1px solid var(--border);text-align:left;font-size:13px;white-space:nowrap}
+.finance-page th{background:#f8fafc;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+.finance-page .text-right{text-align:right}
+.finance-page .money{font-weight:700}
+.finance-page .positive{color:#166534}
+.finance-page .negative{color:#dc2626}
+.finance-page .reversal{color:#c2410c}
+.finance-page .empty{padding:28px;text-align:center;color:var(--muted)}
+.finance-page footer{padding:3px 0 16px;color:var(--muted);font-size:12px}
+.finance-page .header-actions{display:flex;gap:10px;align-items:center}
+.finance-page .message:empty{display:none}
+.finance-page .message{margin:0 0 12px;padding:10px 12px;border-radius:9px;font-size:13px}
+.finance-page .message.error{background:#fee2e2;color:#991b1b}
+.finance-page .message.success{background:#dcfce7;color:#166534}
+.finance-page .status-pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#dcfce7;color:#166534;font-size:11px;font-weight:700}
+.finance-page .status-pill.reversed{background:#fee2e2;color:#991b1b}
+
+/* Coluna ID */
+.finance-page .id-cell{
+  color:#64748b;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+  font-size:12px;
+  font-weight:600;
+}
+
+/* ---------- Botões de ação na tabela ---------- */
+.btn-icon {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  margin: 0 2px;
+  font-size: 14px;
+  line-height: 1;
+  transition: background .15s, border-color .15s;
+}
+.btn-icon:hover { background: #f3f4f6; border-color: #9ca3af; }
+.btn-icon:active { transform: scale(0.96); }
+
+.actions-cell { white-space: nowrap; }
+.muted { color: #9ca3af; }
+
+/* ---------- Badges ---------- */
+.badge-estorno,
+.badge-estornado {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.badge-estorno   { background: #ffedd5; color: #9a3412; }
+.badge-estornado { background: #fee2e2; color: #991b1b; }
+
+/* ---------- Mensagens de formulário ---------- */
+.form-message { font-size: 13px; margin: 12px 0 0; }
+.form-message.success { color: #065f46; }
+.form-message.error   { color: #991b1b; }
+
+/* ---------- Modais (novo + editar) ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+.modal-overlay.hidden { display: none !important; }
+
+.modal-overlay .movement-modal {
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.13);
+}
+.modal-overlay .modal-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.modal-overlay .modal-heading h2 { margin: 0; font-size: 20px; }
+.modal-overlay .modal-heading p  { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+.modal-overlay .modal-close {
+  width: 35px; height: 35px; padding: 0; border: 0; border-radius: 8px;
+  background: #f3f4f6; color: #172033; font-size: 22px; line-height: 1; cursor: pointer;
+}
+.modal-overlay .modal-close:hover { background: #e5e7eb; }
+
+.modal-overlay .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+}
+.modal-overlay .form-grid label { display: block; margin: 8px 0; font-size: 13px; font-weight: 600; }
+.modal-overlay .form-grid input,
+.modal-overlay .form-grid select {
+  display: block; width: 100%; margin-top: 6px; padding: 10px 11px;
+  border: 1px solid var(--border); border-radius: 9px; background: #fff;
+  font-size: 13px; color: #172033;
+}
+.modal-overlay .form-grid input:disabled { background: #f8fafc; color: #64748b; cursor: not-allowed; }
+.modal-overlay .span-2 { grid-column: span 2; }
+
+.modal-overlay .form-message { margin: 12px 0 0; padding: 0; background: transparent; font-size: 13px; }
+.modal-overlay .form-message.success { color: #166534; }
+.modal-overlay .form-message.error   { color: #991b1b; }
+
+.modal-overlay .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 1280px) {
+  .finance-page .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 1100px) {
+  .finance-page .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .finance-page .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .finance-page .page-header { align-items: flex-start; flex-direction: column; }
+  .finance-page .section-header { align-items: flex-start; flex-wrap: wrap; }
+  .finance-page .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .finance-page .card { padding: 15px; }
+  .finance-page .metric { padding: 15px; }
+  .finance-page .metric strong { font-size: 20px; }
+  .finance-page .header-actions { flex-wrap: wrap; }
+  .finance-page .compact-label { width: 100%; max-width: 180px; }
+}
+@media (max-width: 480px) {
+  .finance-page .filters { grid-template-columns: 1fr; }
+  .finance-page .metrics { grid-template-columns: 1fr 1fr; }
+  .modal-overlay { padding: 10px; }
+  .modal-overlay .movement-modal { padding: 18px; }
+  .modal-overlay .form-grid { grid-template-columns: 1fr; }
+  .modal-overlay .span-2 { grid-column: auto; }
+}
+/* Garante que o conteúdo do financeiro respeite o menu lateral fixo */
+@media (min-width: 769px) {
+  .main-content {
+    margin-left: 80px; /* ajuste para a largura real do seu sidebar */
+  }
+}
+
+/* Em telas pequenas o menu costuma virar gaveta — nesse caso não reserva espaço */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+  }
+}
+/* Alinha .main-content ao layout global do styles.css (que usa .main) */
+.main-content{
+  margin-left:245px;
+  width:calc(100% - 245px);
+  padding:28px;
+}
+@media(max-width:700px){
+  .main-content{
+    margin-left:70px;
+    width:calc(100% - 70px);
+    padding:18px 12px;
+  }
+}

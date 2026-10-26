@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão Loja</title>
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Inter, Arial, sans-serif;
+      background: #f4f7fb;
+      color: #172033;
+    }
+
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(79, 70, 229, .20), transparent 30%),
+        radial-gradient(circle at 90% 80%, rgba(37, 99, 235, .18), transparent 30%),
+        linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #eff6ff 100%);
+    }
+
+    .background-shape {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(2px);
+      pointer-events: none;
+    }
+
+    .shape-one {
+      width: 280px;
+      height: 280px;
+      background: rgba(99, 102, 241, .12);
+      top: -100px;
+      left: -80px;
+    }
+
+    .shape-two {
+      width: 360px;
+      height: 360px;
+      background: rgba(59, 130, 246, .10);
+      right: -140px;
+      bottom: -150px;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 430px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .login-card {
+      background: rgba(255, 255, 255, .96);
+      border: 1px solid rgba(226, 232, 240, .9);
+      border-radius: 24px;
+      padding: 42px 38px;
+      box-shadow:
+        0 25px 60px rgba(15, 23, 42, .12),
+        0 8px 25px rgba(15, 23, 42, .06);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .brand-icon {
+      width: 68px;
+      height: 68px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      box-shadow: 0 12px 25px rgba(79, 70, 229, .28);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .login-header h1 {
+      font-size: 28px;
+      line-height: 1.2;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 9px;
+    }
+
+    .login-header p {
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .form-group { margin-bottom: 18px; }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .input-wrapper { position: relative; }
+
+    .input-wrapper svg {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 19px;
+      height: 19px;
+      color: #94a3b8;
+      pointer-events: none;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      height: 52px;
+      border: 1px solid #dbe2ea;
+      border-radius: 13px;
+      background: #f8fafc;
+      color: #111827;
+      font-size: 14px;
+      padding: 0 16px 0 46px;
+      outline: none;
+      transition: .2s ease;
+    }
+
+    .input-wrapper input::placeholder { color: #a1aaba; }
+
+    .input-wrapper input:hover {
+      border-color: #cbd5e1;
+      background: #fff;
+    }
+
+    .input-wrapper input:focus {
+      border-color: #4f46e5;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, .10);
+    }
+
+    .login-button {
+      width: 100%;
+      height: 53px;
+      border: none;
+      border-radius: 13px;
+      margin-top: 8px;
+      cursor: pointer;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      box-shadow: 0 10px 22px rgba(79, 70, 229, .25);
+      transition: .2s ease;
+    }
+
+    .login-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 13px 26px rgba(79, 70, 229, .32);
+    }
+
+    .login-button:active { transform: translateY(0); }
+
+    .login-button:disabled {
+      cursor: not-allowed;
+      opacity: .7;
+      transform: none;
+    }
+
+    #loginMessage { margin-top: 16px; }
+
+    .message {
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .message.error {
+      color: #b91c1c;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+
+    .message.success {
+      color: #166534;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 25px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    /* Botão "Criar nova loja" */
+    .signup-link-wrapper {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eef2f7;
+    }
+
+    .signup-link-wrapper.visible { display: block; }
+
+    .signup-link {
+      display: inline-block;
+      padding: 11px 20px;
+      border-radius: 12px;
+      background: #f0fdf4;
+      color: #166534;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      border: 1px solid #bbf7d0;
+      transition: .15s ease;
+    }
+
+    .signup-link:hover {
+      background: #dcfce7;
+      transform: translateY(-1px);
+    }
+
+    .signup-note {
+      display: block;
+      margin-top: 8px;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 480px) {
+      .login-page { padding: 16px; }
+      .login-card { padding: 32px 24px; border-radius: 20px; }
+      .login-header h1 { font-size: 25px; }
+      .brand-icon { width: 60px; height: 60px; border-radius: 17px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="login-page">
+    <div class="background-shape shape-one"></div>
+    <div class="background-shape shape-two"></div>
+
+    <main class="login-container">
+
+      <section class="login-card">
+
+        <div class="brand">
+          <div class="brand-icon">GL</div>
+        </div>
+
+        <div class="login-header">
+          <h1>Bem-vindo de volta!</h1>
+          <p>Entre na sua conta para acessar o Gestão Loja.</p>
+        </div>
+
+        <form id="loginForm">
+
+          <div class="form-group">
+            <label for="loginEmail">E-mail</label>
+
+            <div class="input-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                <path d="m3 7 9 6 9-6"></path>
+              </svg>
+
+              <input
+                type="email"
+                id="loginEmail"
+                placeholder="seu@email.com"
+                autocomplete="email"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="loginPassword">Senha</label>
+
+            <div class="input-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="4" y="10" width="16" height="11" rx="2"></rect>
+                <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+              </svg>
+
+              <input
+                type="password"
+                id="loginPassword"
+                placeholder="Digite sua senha"
+                autocomplete="current-password"
+                required
+              >
+            </div>
+          </div>
+
+          <button type="submit" class="login-button">
+            Entrar
+          </button>
+
+        </form>
+
+        <div id="loginMessage"></div>
+
+        <!-- Botão "Criar nova loja" — só aparece se houver token na URL -->
+        <div id="signupLinkWrapper" class="signup-link-wrapper">
+          <a id="signupLink" class="signup-link" href="cadastro.html">
+            🎉 Criar nova loja
+          </a>
+          <span class="signup-note">Você foi convidado a criar uma loja.</span>
+        </div>
+
+        <div class="login-footer">
+          Gestão Loja • Sistema de gerenciamento
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+
+  <script>
+    /* =========================================================
+       BOTÃO "CRIAR NOVA LOJA"
+       Regra: se a URL tem ?token=..., mostra o botão e aponta
+       direto para cadastro.html?token=...
+       Não valida nada. Não depende de window.db.
+       ========================================================= */
+    (function configurarBotaoConvite() {
+      const token = new URLSearchParams(window.location.search).get("token");
+
+      if (!token) {
+        console.log("[convite] Nenhum token na URL — botão escondido.");
+        return;
+      }
+
+      const wrapper = document.getElementById("signupLinkWrapper");
+      const link    = document.getElementById("signupLink");
+
+      if (!wrapper || !link) {
+        console.warn("[convite] Elementos do botão não encontrados.");
+        return;
+      }
+
+      link.href = "cadastro.html?token=" + encodeURIComponent(token);
+      wrapper.classList.add("visible");
+
+      console.log("[convite] Botão exibido com href:", link.href);
+    })();
+  </script>
+
+</body>
+</html>
