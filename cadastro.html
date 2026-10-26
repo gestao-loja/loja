@@ -238,13 +238,12 @@
   <script>
     /* =========================================================
        CADASTRO DE LOJA
-       1) Mostra o formulário sempre (se houver token na URL).
-       2) Ao clicar em "Criar loja":
-          - valida o convite (validar_convite)
-          - cria o usuário no Auth (signUp)
-          - insere a loja em gestao_loja_lojas
-          - insere o usuário em gestao_loja_usuarios
-          - marca o convite como usado
+       Fluxo:
+       1) Valida o convite (RPC validar_convite)
+       2) Cria o usuário no Auth (signUp)
+       3) Insere a loja em gestao_loja_lojas
+       4) Insere o usuário em gestao_loja_usuarios
+       5) Marca o convite como usado (RPC marcar_convite_como_usado)
        ========================================================= */
 
     const signupMessage = document.getElementById("signupMessage");
@@ -268,7 +267,6 @@
         return;
       }
 
-      // Só para avisar o usuário — a validação de verdade acontece no submit
       showMessage("Preencha os dados da nova loja.", "info");
     });
 
@@ -300,6 +298,7 @@
 
         try {
           // 1) Validar convite
+          console.log("[cadastro] Validando convite...");
           const valid = await window.db.rpc("validar_convite", { p_token: token });
 
           if (valid.error) {
@@ -318,6 +317,7 @@
           }
 
           // 2) Criar usuário no Auth
+          console.log("[cadastro] Criando usuário no Auth...");
           const signUp = await window.db.auth.signUp({
             email: adminEmail,
             password: adminPassword,
@@ -325,7 +325,6 @@
           });
 
           if (signUp.error) {
-            // Tratamento amigável para e-mail já cadastrado
             if (signUp.error.message.includes("already registered")) {
               throw new Error("Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.");
             }
@@ -336,9 +335,10 @@
           if (!userId) {
             throw new Error("Usuário criado, mas sem ID. Verifique a confirmação de e-mail no Supabase.");
           }
+          console.log("[cadastro] Usuário criado. ID:", userId);
 
           // 3) Inserir loja
-          // (A tabela exige tanto 'nome' quanto 'nome_fantasia')
+          console.log("[cadastro] Inserindo loja...");
           const lojaInsert = await window.db
             .from("gestao_loja_lojas")
             .insert({
@@ -356,9 +356,10 @@
           }
 
           const idLoja = lojaInsert.data.id_loja;
+          console.log("[cadastro] Loja criada. ID:", idLoja);
 
           // 4) Inserir usuário vinculado à loja
-          // (O perfil precisa ser exatamente 'Administrador' conforme a constraint)
+          console.log("[cadastro] Vinculando usuário à loja...");
           const usuarioInsert = await window.db
             .from("gestao_loja_usuarios")
             .insert({
@@ -366,28 +367,31 @@
               id_loja: idLoja,
               nome: adminName,
               email: adminEmail,
-              perfil: "Administrador",
+              perfil: "Administrador", 
               ativo: true
             });
 
           if (usuarioInsert.error) {
             throw new Error("Erro ao vincular usuário à loja: " + usuarioInsert.error.message);
           }
+          console.log("[cadastro] Usuário vinculado com sucesso.");
 
-          // 5) Marcar convite como usado
-          const usado = await window.db
-            .from("gestao_loja_convites")
-            .update({
-              usado_em: new Date().toISOString(),
-              usado_por_loja: idLoja,
-              ativo: false
-            })
-            .eq("token", token);
+          // 5) Marcar convite como usado (RPC Segura)
+          console.log("[cadastro] Marcando convite como usado...");
+          const { data: conviteAtualizado, error: erroConvite } = await window.db.rpc("marcar_convite_como_usado", {
+            p_token: token,
+            p_id_loja: idLoja
+          });
 
-          if (usado.error) {
-            console.warn("Aviso: convite não foi marcado como usado:", usado.error);
+          if (erroConvite) {
+            console.warn("Aviso: erro ao marcar convite como usado via RPC:", erroConvite);
+          } else if (!conviteAtualizado) {
+            console.warn("Aviso: convite não foi encontrado para atualização.");
+          } else {
+            console.log("[cadastro] Convite marcado como usado com sucesso!");
           }
 
+          // Sucesso final
           showMessage("Loja criada com sucesso! Redirecionando para o login...", "success");
 
           setTimeout(function () {
