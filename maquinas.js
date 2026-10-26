@@ -180,21 +180,8 @@ async function loadGlobalConfigs() {
     `;
   }
 
-  const { data, error } = await db
-    .from("gestao_loja_maquinas_configuracoes")
-    .select(`
-      *,
-      gestao_loja_maquinas (
-        id,
-        nome,
-        tipo,
-        marca,
-        modelo
-      )
-    `)
-    .eq("id_loja", LOJA_MATRIZ_ID)
-    .eq("global", true)
-    .order("nome");
+  // Chamamos a função RPC que criamos no banco de dados
+  const { data, error } = await db.rpc("gestao_loja_buscar_configuracoes_globais");
 
   if (error) {
     if (container) {
@@ -207,7 +194,28 @@ async function loadGlobalConfigs() {
     return;
   }
 
-  allGlobalConfigs = data || [];
+  // Precisamos formatar os dados para o mesmo formato que o render espera
+  allGlobalConfigs = (data || []).map(row => ({
+    id: row.id,
+    id_loja: row.id_loja,
+    maquina_id: row.maquina_id,
+    nome: row.nome,
+    material: row.material,
+    prensa: row.prensa,
+    temperatura: row.temperatura,
+    tempo: row.tempo,
+    pressao: row.pressao,
+    observacoes: row.observacoes,
+    global: row.global,
+    created_at: row.created_at,
+    gestao_loja_maquinas: {
+      id: row.maquina_id,
+      nome: row.maquina_nome,
+      tipo: row.maquina_tipo,
+      marca: row.maquina_marca,
+      modelo: row.maquina_modelo
+    }
+  }));
 
   renderGlobais();
 }

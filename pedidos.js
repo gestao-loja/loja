@@ -18,20 +18,26 @@ let editingOrderId = null;
  * a contagem nunca "volta" e nunca colide.
  */
 async function proximaSequenciaPedido() {
-
+  // Busca o MAIOR número existente para esta loja, em vez de contar
   const result = await db
     .from("gestao_loja_pedidos")
-    .select("id", { count: "exact", head: true })
-    .eq("id_loja", currentStore.id_loja);
+    .select("numero")
+    .eq("id_loja", currentStore.id_loja)
+    .order("numero", { ascending: false })
+    .limit(1);
 
   if (result.error) {
     throw result.error;
   }
 
-  const total = result.count || 0;
+  // Se não houver nenhum pedido, começa do 1
+  if (!result.data || result.data.length === 0) {
+    return 1;
+  }
 
-  return total + 1;
-
+  // Pega o maior número atual e soma 1
+  const ultimoNumero = Number(result.data[0].numero) || 0;
+  return ultimoNumero + 1;
 }
 
 
@@ -2722,39 +2728,69 @@ async function confirmOrder(orderId) {
     alert(
       "Este pedido não está pendente.\n\n" +
       "Status atual: " +
-      (order.status || "não informado") +
-      "\n\n" +
-      (isNew(order)
-        ? "Aceite o pedido primeiro antes de confirmá-lo."
-        : "")
+      (order.status || "não informado")
     );
     return;
   }
 
+  const msgEstoque = currentStore.utiliza_estoque !== false 
+    ? "Ao confirmar, o estoque será movimentado."
+    : "Esta loja não utiliza controle de estoque, então nenhuma quantidade será deduzida.";
+
   const confirmed = confirm(
     `Deseja confirmar o pedido #${order.numero}?\n\n` +
     `Valor: ${orderMoney(order.valor_total)}\n\n` +
-    `Ao confirmar, o estoque será movimentado.`
+    msgEstoque
   );
 
   if (!confirmed) {
     return;
   }
 
-  const { error: rpcError } = await db.rpc(
-    "gestao_loja_confirmar_pedido",
-    { p_pedido_id: Number(orderId) }
-  );
+  try {
+    // VERIFICAÇÃO CRUCIAL: Se utiliza_estoque for falso, ignora a RPC
+    if (currentStore.utiliza_estoque !== false) {
+      
+      // LOJA USA ESTOQUE: Chama a RPC que valida e baixa o estoque
+      const { error: rpcError } = await db.rpc(
+        "gestao_loja_confirmar_pedido",
+        { p_pedido_id: Number(orderId) }
+      );
 
-  if (rpcError) {
-    alert("Erro ao confirmar pedido:\n" + rpcError.message);
-    return;
+      if (rpcError) {
+        alert("Erro ao confirmar pedido:\n" + rpcError.message);
+        return;
+      }
+
+    } else {
+      
+      // LOJA NÃO USA ESTOQUE: Altera o status diretamente, sem passar pela RPC
+      const { error: updateError } = await db
+        .from("gestao_loja_pedidos")
+        .update({ status: "Confirmado" })
+        .eq("id", orderId)
+        .eq("id_loja", currentStore.id_loja);
+
+      if (updateError) {
+        alert("Erro ao confirmar pedido:\n" + updateError.message);
+        return;
+      }
+    }
+
+    closeModal();
+    await loadOrders();
+
+    alert(
+      "Pedido confirmado com sucesso!\n\n" +
+      (currentStore.utiliza_estoque !== false 
+        ? "O estoque foi atualizado." 
+        : "Nenhuma alteração de estoque foi feita (opção desabilitada).")
+    );
+
+  } catch (error) {
+    console.error("Erro ao confirmar pedido:", error);
+    alert("Erro inesperado ao confirmar pedido:\n" + error.message);
   }
-
-  closeModal();
-  await loadOrders();
-
-  alert("Pedido confirmado com sucesso.");
 }
 
 async function cancelOrder(orderId) {

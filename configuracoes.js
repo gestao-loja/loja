@@ -32,7 +32,6 @@
   }
 
   async function carregarLoja() {
-    // app.js já carregou currentStore
     if (!window.currentStore) {
       return setTimeout(carregarLoja, 300);
     }
@@ -66,6 +65,10 @@
       store.exibir_preco_catalogo !== false;
     document.getElementById("c_ativo").checked =
       store.ativo !== false;
+      
+    // NOVO CAMPO AQUI
+    document.getElementById("c_utiliza_estoque").checked =
+      store.utiliza_estoque !== false;
 
     logoAtual = store.logo || null;
     setLogoPreview(logoAtual);
@@ -120,7 +123,6 @@
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validação
     if (!file.type.startsWith("image/")) {
       alert("Selecione um arquivo de imagem.");
       logoInput.value = "";
@@ -134,7 +136,6 @@
       return;
     }
 
-    // Preview local imediato
     const reader = new FileReader();
     reader.onload = function (ev) {
       logoPreview.innerHTML = `<img src="${ev.target.result}" alt="Prévia">`;
@@ -146,15 +147,7 @@
     removendoLogo = false;
   });
 
-  /* ============================================================
-     REMOVER LOGO
-     ============================================================
-     Opção 1: confirma a intenção e só marca para remoção.
-     A exclusão real (banco + bucket) acontece ao clicar em
-     "Salvar alterações" (ver btnSalvar abaixo).
-     ============================================================ */
   btnRemoverLogo.addEventListener("click", function () {
-
     const confirmado = confirm(
       "Remover o logo da loja?\n\n" +
       "O logo será apagado do banco e do armazenamento ao salvar as alterações."
@@ -167,7 +160,6 @@
     logoInput.value = "";
     setLogoPreview(null);
     logoStatus.textContent = "Logo será removida ao salvar.";
-
   });
 
   /* ---------- Salvar ---------- */
@@ -198,12 +190,10 @@
     try {
       let logoUrl = logoAtual;
 
-      // Upload (se escolheu novo)
       if (logoNova) {
         logoUrl = await uploadLogo(logoNova);
       }
 
-      // Remoção
       if (removendoLogo) {
         logoUrl = null;
       }
@@ -237,6 +227,9 @@
         exibir_preco_catalogo:
           document.getElementById("c_exibir_preco_catalogo").checked,
         ativo: document.getElementById("c_ativo").checked,
+        
+        // NOVO CAMPO AQUI
+        utiliza_estoque: document.getElementById("c_utiliza_estoque").checked,
 
         logo: logoUrl
       };
@@ -260,7 +253,6 @@
           "Loja";
       }
 
-      // Se subiu logo, ela já está no Storage; descarta a referência local
       if (logoNova) {
         logoAtual = logoUrl;
         logoNova = null;

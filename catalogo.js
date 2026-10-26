@@ -1943,368 +1943,151 @@ function normalizeDocument(value) {
 
 async function finishCatalogOrder() {
   if (!catalogCart.length) {
-    alert(
-      "O carrinho está vazio."
-    );
-
+    alert("O carrinho está vazio.");
     return;
   }
 
-  const tipoCliente =
-    getCheckoutValue(
-      "checkoutTipoCliente"
-    );
+  const tipoCliente = getCheckoutValue("checkoutTipoCliente");
+  const nome = getCheckoutValue("checkoutNome");
+  const telefone = getCheckoutValue("checkoutTelefone");
+  const whatsapp = getCheckoutValue("checkoutWhatsapp");
+  const email = getCheckoutValue("checkoutEmail");
+  const razaoSocial = getCheckoutValue("checkoutRazaoSocial");
+  const nomeFantasia = getCheckoutValue("checkoutNomeFantasia");
+  const cnpj = normalizeDocument(getCheckoutValue("checkoutCnpj"));
+  const cep = getCheckoutValue("checkoutCep");
+  const endereco = getCheckoutValue("checkoutEndereco");
+  const numero = getCheckoutValue("checkoutNumero");
+  const complemento = getCheckoutValue("checkoutComplemento");
+  const bairro = getCheckoutValue("checkoutBairro");
+  const cidade = getCheckoutValue("checkoutCidade");
+  const estado = getCheckoutValue("checkoutEstado");
+  const dataEntrega = getCheckoutValue("checkoutDataEntrega");
+  const observacoes = getCheckoutValue("checkoutObservacoes");
 
-  const nome =
-    getCheckoutValue(
-      "checkoutNome"
-    );
-
-  const telefone =
-    getCheckoutValue(
-      "checkoutTelefone"
-    );
-
-  const whatsapp =
-    getCheckoutValue(
-      "checkoutWhatsapp"
-    );
-
-  const email =
-    getCheckoutValue(
-      "checkoutEmail"
-    );
-
-  const razaoSocial =
-    getCheckoutValue(
-      "checkoutRazaoSocial"
-    );
-
-  const nomeFantasia =
-    getCheckoutValue(
-      "checkoutNomeFantasia"
-    );
-
-  const cnpj =
-    normalizeDocument(
-      getCheckoutValue(
-        "checkoutCnpj"
-      )
-    );
-
-  const cep =
-    getCheckoutValue(
-      "checkoutCep"
-    );
-
-  const endereco =
-    getCheckoutValue(
-      "checkoutEndereco"
-    );
-
-  const numero =
-    getCheckoutValue(
-      "checkoutNumero"
-    );
-
-  const complemento =
-    getCheckoutValue(
-      "checkoutComplemento"
-    );
-
-  const bairro =
-    getCheckoutValue(
-      "checkoutBairro"
-    );
-
-  const cidade =
-    getCheckoutValue(
-      "checkoutCidade"
-    );
-
-  const estado =
-    getCheckoutValue(
-      "checkoutEstado"
-    );
-
-  const dataEntrega =
-    getCheckoutValue(
-      "checkoutDataEntrega"
-    );
-
-  const observacoes =
-    getCheckoutValue(
-      "checkoutObservacoes"
-    );
-
-  if (!nome) {
-    alert(
-      "Informe o nome."
-    );
-
+  if (!nome || !telefone) {
+    alert("Informe o nome e o telefone.");
     return;
   }
 
-  if (!telefone) {
-    alert(
-      "Informe o telefone."
-    );
-
-    return;
+  const button = document.querySelector("#checkoutContent .catalog-primary");
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Enviando pedido...";
   }
-
-  if (
-    tipoCliente ===
-    "Pessoa Jurídica"
-  ) {
-    if (!cnpj) {
-      alert(
-        "Informe o CNPJ."
-      );
-
-      return;
-    }
-
-    if (!razaoSocial) {
-      alert(
-        "Informe a razão social."
-      );
-
-      return;
-    }
-
-    if (!email) {
-      alert(
-        "Informe o e-mail."
-      );
-
-      return;
-    }
-
-    if (!cep) {
-      alert(
-        "Informe o CEP."
-      );
-
-      return;
-    }
-
-    if (!endereco) {
-      alert(
-        "Informe o endereço."
-      );
-
-      return;
-    }
-
-    if (!numero) {
-      alert(
-        "Informe o número."
-      );
-
-      return;
-    }
-
-    if (!bairro) {
-      alert(
-        "Informe o bairro."
-      );
-
-      return;
-    }
-
-    if (!cidade) {
-      alert(
-        "Informe a cidade."
-      );
-
-      return;
-    }
-
-    if (!estado) {
-      alert(
-        "Informe o estado."
-      );
-
-      return;
-    }
-  }
-
-  const cliente = {
-    tipo_cliente:
-      tipoCliente,
-
-    nome:
-      nome,
-
-    razao_social:
-      razaoSocial || null,
-
-    nome_fantasia:
-      nomeFantasia || null,
-
-    cpf_cnpj:
-      cnpj || null,
-
-    email:
-      email || null,
-
-    telefone:
-      telefone,
-
-    whatsapp:
-      whatsapp || null,
-
-    cep:
-      cep || null,
-
-    endereco:
-      endereco || null,
-
-    numero:
-      numero || null,
-
-    complemento:
-      complemento || null,
-
-    bairro:
-      bairro || null,
-
-    cidade:
-      cidade || null,
-
-    estado:
-      estado || null
-  };
-
-  const itens =
-    catalogCart.map(
-      item => ({
-        produto_id:
-          Number(
-            item.produto_id
-          ),
-
-        variacao_id:
-          item.variacao_id
-            ? Number(
-                item.variacao_id
-              )
-            : null,
-
-        quantidade:
-          Number(
-            item.quantidade
-          ),
-
-        observacao:
-          item.observacao || ""
-      })
-    );
 
   try {
-    const button =
-      document.querySelector(
-        "#checkoutContent .catalog-primary"
-      );
+    // 1. CALCULAR O PRÓXIMO NÚMERO EXCLUSIVO DA LOJA
+    const { data: maxNumeroData, error: maxNumeroError } = await db
+      .from("gestao_loja_pedidos")
+      .select("numero")
+      .eq("id_loja", catalogStoreId)
+      .order("numero", { ascending: false })
+      .limit(1);
 
-    if (button) {
-      button.disabled =
-        true;
+    if (maxNumeroError) throw new Error("Erro ao calcular numeração: " + maxNumeroError.message);
 
-      button.textContent =
-        "Enviando pedido...";
+    let proximoNumero = 1;
+    if (maxNumeroData && maxNumeroData.length > 0) {
+      proximoNumero = Number(maxNumeroData[0].numero) + 1;
     }
 
-    const result =
-      await db.rpc(
-        "gestao_loja_criar_pedido_catalogo",
-        {
-          p_id_loja:
-            Number(
-              catalogStoreId
-            ),
+    // 2. CRIAR / BUSCAR O CLIENTE
+    let clienteId = null;
+    const { data: existingClient } = await db
+      .from("gestao_loja_clientes")
+      .select("id")
+      .eq("id_loja", catalogStoreId)
+      .eq("telefone", telefone)
+      .limit(1)
+      .maybeSingle();
 
-          p_cliente:
-            cliente,
+    if (existingClient) {
+      clienteId = existingClient.id;
+    } else {
+      const { data: newClient, error: clientError } = await db
+        .from("gestao_loja_clientes")
+        .insert({
+          id_loja: catalogStoreId,
+          tipo_cliente: tipoCliente,
+          nome: nome,
+          razao_social: razaoSocial || null,
+          nome_fantasia: nomeFantasia || null,
+          cpf_cnpj: cnpj || null,
+          email: email || null,
+          telefone: telefone,
+          whatsapp: whatsapp || null,
+          cep: cep || null,
+          endereco: endereco || null,
+          numero: numero || null,
+          complemento: complemento || null,
+          bairro: bairro || null,
+          cidade: cidade || null,
+          estado: estado || null,
+          ativo: true
+        })
+        .select("id")
+        .single();
 
-          p_itens:
-            itens,
-
-          p_data_entrega:
-            dataEntrega
-              ? formatDateBR(
-                  dataEntrega
-                )
-              : null,
-
-          p_observacoes:
-            observacoes ||
-            null
-        }
-      );
-
-    console.log(
-      "Resultado do pedido:",
-      result
-    );
-
-    if (result.error) {
-      console.error(
-        "Erro ao criar pedido:",
-        result.error
-      );
-
-      alert(
-        result.error.message ||
-        "Não foi possível enviar o pedido."
-      );
-
-      if (button) {
-        button.disabled =
-          false;
-
-        button.textContent =
-          "Enviar pedido";
-      }
-
-      return;
+      if (clientError) throw new Error("Erro ao criar cliente: " + clientError.message);
+      clienteId = newClient.id;
     }
 
-    let data =
-      result.data;
+    // 3. CRIAR O PEDIDO COM O NÚMERO CALCULADO
+    const subtotal = catalogCart.reduce((acc, item) => acc + (item.quantidade * item.preco_unitario), 0);
 
-    if (typeof data === "string") {
-      try {
-        data =
-          JSON.parse(data);
-      } catch (error) {
-        console.error(
-          "Erro ao interpretar resposta:",
-          error
-        );
-      }
+    const { data: pedido, error: pedidoError } = await db
+      .from("gestao_loja_pedidos")
+      .insert({
+        id_loja: catalogStoreId,
+        cliente_id: clienteId,
+        numero: proximoNumero, // <--- O NÚMERO CALCULADO É ENVIADO AQUI
+        data_pedido: new Date().toISOString().split("T")[0],
+        status: "Pendente",
+        tipo_entrega: "entrega",
+        subtotal: subtotal,
+        valor_total: subtotal,
+        prazo_entrega: dataEntrega || null,
+        observacoes: observacoes || null
+      })
+      .select("id, numero")
+      .single();
+
+    if (pedidoError) throw new Error("Erro ao criar pedido: " + pedidoError.message);
+
+    // 4. CRIAR OS ITENS DO PEDIDO
+    const itensData = catalogCart.map(item => ({
+      id_loja: catalogStoreId,
+      pedido_id: pedido.id,
+      produto_id: item.produto_id,
+      variacao_id: item.variacao_id || null,
+      quantidade: item.quantidade,
+      preco_unitario: item.preco_unitario,
+      subtotal: item.quantidade * item.preco_unitario,
+      observacao: item.observacao || null
+    }));
+
+    const { error: itensError } = await db.from("gestao_loja_pedidos_itens").insert(itensData);
+
+    if (itensError) {
+      await db.from("gestao_loja_pedidos").delete().eq("id", pedido.id);
+      throw new Error("Erro ao salvar itens: " + itensError.message);
     }
 
+    // 5. SUCESSO
     catalogCart = [];
-
     updateCartCount();
-
     closeCheckout();
-
-    showOrderSuccess(
-      data
-    );
+    showOrderSuccess({ numero: pedido.numero, pedido_id: pedido.id });
 
   } catch (error) {
-    console.error(
-      "Erro ao finalizar pedido:",
-      error
-    );
-
-    alert(
-      "Ocorreu um erro ao enviar o pedido."
-    );
+    console.error("Erro ao finalizar pedido:", error);
+    alert(error.message || "Ocorreu um erro ao enviar o pedido.");
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Enviar pedido";
+    }
   }
 }
 
@@ -2328,95 +2111,24 @@ function formatDateBR(date) {
 }
 
 function showOrderSuccess(data) {
-  const number =
-    data?.numero ||
-    data?.pedido_numero ||
-    data?.pedido_id ||
-    "";
+  const number = data?.numero || data?.pedido_numero || data?.pedido_id || "";
+  const content = document.getElementById("checkoutContent");
+  const modal = document.getElementById("checkoutModal");
 
-  const content =
-    document.getElementById(
-      "checkoutContent"
-    );
-
-  const modal =
-    document.getElementById(
-      "checkoutModal"
-    );
-
-  if (modal) {
-    modal.classList.remove(
-      "hidden"
-    );
-  }
+  if (modal) modal.classList.remove("hidden");
 
   if (!content) {
-    alert(
-      "Pedido enviado com sucesso!"
-    );
-
+    alert("Pedido enviado com sucesso!");
     return;
   }
 
   content.innerHTML = `
-    <div
-      style="
-        padding:45px 25px;
-        text-align:center;
-      "
-    >
-
-      <div
-        style="
-          font-size:50px;
-          margin-bottom:15px;
-        "
-      >
-        ✓
-      </div>
-
-      <h2>
-        Pedido enviado!
-      </h2>
-
-      <p
-        class="muted"
-        style="
-          margin-top:10px;
-        "
-      >
-        Recebemos seu pedido e a loja irá analisá-lo.
-      </p>
-
-      ${
-        number
-          ? `
-            <p
-              style="
-                margin-top:20px;
-                font-weight:700;
-              "
-            >
-              Pedido nº
-              ${escapeHtml(
-                String(number)
-              )}
-            </p>
-          `
-          : ""
-      }
-
-      <button
-        type="button"
-        class="catalog-primary"
-        style="
-          margin-top:20px;
-        "
-        onclick="closeCheckout()"
-      >
-        Fechar
-      </button>
-
+    <div style="padding:45px 25px;text-align:center;">
+      <div style="font-size:50px;margin-bottom:15px;">✓</div>
+      <h2>Pedido enviado!</h2>
+      <p class="muted" style="margin-top:10px;">Recebemos seu pedido e a loja irá analisá-lo.</p>
+      ${number ? `<p style="margin-top:20px;font-weight:700;">Pedido nº ${escapeHtml(String(number))}</p>` : ""}
+      <button type="button" class="catalog-primary" style="margin-top:20px;" onclick="closeCheckout()">Fechar</button>
     </div>
   `;
 }
