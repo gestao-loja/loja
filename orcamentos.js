@@ -19,20 +19,23 @@ let editingQuoteId = null;
  * pedido (o número é preservado).
  */
 async function proximaSequenciaOrcamento() {
-
   const result = await db
     .from("gestao_loja_pedidos")
-    .select("id", { count: "exact", head: true })
-    .eq("id_loja", currentStore.id_loja);
+    .select("numero")
+    .eq("id_loja", currentStore.id_loja)
+    .order("numero", { ascending: false })
+    .limit(1);
 
   if (result.error) {
     throw result.error;
   }
 
-  const total = result.count || 0;
+  if (!result.data || result.data.length === 0) {
+    return 1;
+  }
 
-  return total + 1;
-
+  const ultimoNumero = Number(result.data[0].numero) || 0;
+  return ultimoNumero + 1;
 }
 
 
