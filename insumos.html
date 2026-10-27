@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão Loja - Insumos</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+  <script src="insumos.js" defer></script>
+</head>
+
+<body data-page="insumos">
+  <div id="app" class="app">
+    <div id="menu"></div>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>Insumos</h1>
+          <div class="muted" id="pageSubtitle"></div>
+        </div>
+        <div class="user-info">
+          <br>
+          <span id="userEmail"></span>
+        </div>
+      </div>
+
+      <div id="content">
+        <div class="section">
+          <div class="section-head">
+            <h2>Insumos cadastrados</h2>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <!-- Botão que chama a função específica de categorias de insumos -->
+              <button class="btn btn-secondary" onclick="newCategoryInsumo()">
+                + Nova categoria
+              </button>
+              <!-- Botão que chama o modal de insumos -->
+              <button class="btn btn-primary" onclick="newInsumo()">
+                + Novo insumo
+              </button>
+            </div>
+          </div>
+          <div id="productsTable" class="loading">
+            Carregando...
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Estrutura padrão do seu modal -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="modalTitle">Cadastro</h2>
+        <button class="close" onclick="closeModal()">×</button>
+      </div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+</body>
+</html>
