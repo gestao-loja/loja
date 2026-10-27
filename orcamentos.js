@@ -106,30 +106,59 @@ function formatQuoteDate(value) {
 
 }
 
+function normalizeQuoteStatus(status) {
+  return String(status || "").trim().toLowerCase();
+}
+
 function isQuoteStatus(status) {
 
-  return String(status || "")
-    .trim()
-    .toLowerCase() === "orçamento";
+  return normalizeQuoteStatus(status) === "orçamento";
 
+}
+
+function isNewStatus(status) {
+  return normalizeQuoteStatus(status) === "novo";
+}
+
+function isPendingStatus(status) {
+  return normalizeQuoteStatus(status) === "pendente";
+}
+
+function isApprovedStatus(status) {
+  const s = normalizeQuoteStatus(status);
+  return s === "aprovado" || s === "confirmado";
+}
+
+function isRejectedStatus(status) {
+  return normalizeQuoteStatus(status) === "recusado";
+}
+
+function isCancelledStatus(status) {
+  return normalizeQuoteStatus(status) === "cancelado";
 }
 
 function quoteStatusClass(status) {
 
-  const normalized = String(status || "")
-    .trim()
-    .toLowerCase();
+  const normalized = normalizeQuoteStatus(status);
 
   if (normalized === "orçamento") {
     return "status-orcamento";
+  }
+
+  if (normalized === "novo") {
+    return "status-novo";
   }
 
   if (normalized === "pendente") {
     return "status-pendente";
   }
 
-  if (normalized === "confirmado") {
+  if (normalized === "confirmado" || normalized === "aprovado") {
     return "status-confirmado";
+  }
+
+  if (normalized === "recusado") {
+    return "status-recusado";
   }
 
   if (normalized === "cancelado") {
@@ -162,6 +191,12 @@ function getIndicadorIeLabel(value) {
 
   return labels[String(value)] || "9 - Não contribuinte";
 
+}
+
+function getCurrentUserId() {
+  // Compatível com diferentes formatos do currentUser
+  if (!currentUser) return null;
+  return currentUser.id || currentUser.user?.id || null;
 }
 
 
@@ -272,7 +307,15 @@ async function loadQuotes() {
       )
     `)
     .eq("id_loja", currentStore.id_loja)
-    .eq("status", "Orçamento")
+    .in("status", [
+      "Orçamento",
+      "Novo",          // ✅ Adicionado
+      "Pendente",
+      "Aprovado",
+      "Confirmado",
+      "Recusado",
+      "Cancelado"
+    ])
     .order("id", { ascending: false });
 
   if (error) {
@@ -2669,6 +2712,8 @@ async function viewQuote(quoteId) {
 
   const isPJ = isPessoaJuridica(client?.tipo_cliente);
 
+  const status = quote.status || "Orçamento";
+
   document.getElementById("modal").classList.remove("hidden");
 
   document.querySelector(
@@ -2758,8 +2803,8 @@ async function viewQuote(quoteId) {
 
           <strong>Status:</strong>
 
-          <span class="status ${quoteStatusClass(quote.status)}">
-            ${escapeHtml(quote.status || "Orçamento")}
+          <span class="status ${quoteStatusClass(status)}">
+            ${escapeHtml(status)}
           </span>
 
         </p>
@@ -2841,6 +2886,65 @@ async function viewQuote(quoteId) {
       </div>
 
     </div>
+
+
+    ${
+      isRejectedStatus(status) && quote.motivo_recusa
+        ? `
+          <div
+            class="card"
+            style="
+              margin-top:20px;
+              border-left:4px solid #b42318;
+              background:#fdecec;
+            "
+          >
+            <h3 style="margin-top:0;color:#b42318;">
+              ❌ Pedido recusado
+            </h3>
+
+            <p style="white-space:pre-wrap;margin:8px 0 0;">
+              <strong>Motivo:</strong>
+              ${escapeHtml(quote.motivo_recusa)}
+            </p>
+
+            ${
+              quote.recusado_em
+                ? `
+                  <p class="muted" style="margin:6px 0 0;font-size:12px;">
+                    Recusado em ${formatQuoteDate(quote.recusado_em)}
+                  </p>
+                `
+                : ""
+            }
+          </div>
+        `
+        : ""
+    }
+
+
+    ${
+      isApprovedStatus(status) && quote.aprovado_em
+        ? `
+          <div
+            class="card"
+            style="
+              margin-top:20px;
+              border-left:4px solid #067647;
+              background:#ecfdf3;
+            "
+          >
+            <h3 style="margin-top:0;color:#067647;">
+              ✅ Pedido aprovado
+            </h3>
+
+            <p class="muted" style="margin:8px 0 0;font-size:12px;">
+              Aprovado em ${formatQuoteDate(quote.aprovado_em)}
+            </p>
+          </div>
+        `
+        : ""
+    }
 
 
     ${
@@ -3010,7 +3114,7 @@ async function viewQuote(quoteId) {
 
 
       ${
-        isQuoteStatus(quote.status)
+        isQuoteStatus(status)
           ? `
             <button
               class="btn btn-secondary"
@@ -3035,6 +3139,28 @@ async function viewQuote(quoteId) {
           `
           : ""
       }
+
+
+      ${
+        isNewStatus(status)
+          ? `
+            <button
+              class="btn btn-primary"
+              onclick="approveOrder(${quote.id})"
+            >
+              ✅ Aprovar pedido
+            </button>
+
+            <button
+              class="btn btn-danger"
+              onclick="rejectOrder(${quote.id})"
+            >
+              ❌ Recusar pedido
+            </button>
+          `
+          : ""
+      }
+
 
       <button
         class="btn btn-secondary"
@@ -3174,7 +3300,7 @@ async function editQuote(quoteId) {
 
 
 /* ======================================================
-   APROVAR / CANCELAR
+   APROVAR / CANCELAR ORÇAMENTO (AÇÃO DO CLIENTE)
    ====================================================== */
 
 async function approveQuote(quoteId) {
@@ -3199,7 +3325,7 @@ async function approveQuote(quoteId) {
   const confirmed = confirm(
     `Deseja aprovar o orçamento #${quote.numero}?\n\n` +
     `Valor: ${quoteMoney(quote.valor_total)}\n\n` +
-    `O orçamento passará para o status "Pendente".`
+    `Ele será enviado para a loja como PENDENTE.`
   );
 
   if (!confirmed) {
@@ -3208,7 +3334,14 @@ async function approveQuote(quoteId) {
 
   const { error: updateError } = await db
     .from("gestao_loja_pedidos")
-    .update({ status: "Pendente" })
+    .update({
+      status: "Pendente",                               // ✅ Alterado para Pendente
+      aprovado_em: new Date().toISOString(),
+      aprovado_por: getCurrentUserId(),
+      recusado_em: null,
+      recusado_por: null,
+      motivo_recusa: null
+    })
     .eq("id", quoteId)
     .eq("id_loja", currentStore.id_loja);
 
@@ -3222,7 +3355,7 @@ async function approveQuote(quoteId) {
 
   alert(
     "Orçamento aprovado.\n\n" +
-    "Agora ele está como Pendente."
+    "Agora ele está como PENDENTE e pode ser confirmado na tela de pedidos."
   );
 
 }
@@ -3262,6 +3395,177 @@ async function cancelQuote(quoteId) {
   await loadQuotes();
 
   alert("Orçamento cancelado.");
+
+}
+
+
+/* ======================================================
+   APROVAR / RECUSAR PEDIDO (AÇÃO DA LOJA)
+   ====================================================== */
+
+async function approveOrder(orderId) {
+
+  const { data: order, error } = await db
+    .from("gestao_loja_pedidos")
+    .select("id, numero, status, valor_total")
+    .eq("id", orderId)
+    .eq("id_loja", currentStore.id_loja)
+    .single();
+
+  if (error) {
+    alert("Erro ao carregar pedido:\n" + error.message);
+    return;
+  }
+
+  if (!isNewStatus(order.status)) {
+    alert("Somente pedidos com status Novo podem ser aprovados.");
+    return;
+  }
+
+  const confirmed = confirm(
+    `Aprovar o pedido #${order.numero}?\n\n` +
+    `Valor: ${quoteMoney(order.valor_total)}\n\n` +
+    `Ao aprovar, o pedido passará para PENDENTE.`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const { error: updateError } = await db
+    .from("gestao_loja_pedidos")
+    .update({
+      status: "Pendente",
+      aprovado_em: new Date().toISOString(),
+      aprovado_por: getCurrentUserId(),
+      recusado_em: null,
+      recusado_por: null,
+      motivo_recusa: null
+    })
+    .eq("id", orderId)
+    .eq("id_loja", currentStore.id_loja);
+
+  if (updateError) {
+    alert("Erro ao aprovar pedido:\n" + updateError.message);
+    return;
+  }
+
+  closeModal();
+  await loadQuotes();
+
+  alert("Pedido aprovado com sucesso. Agora ele está como PENDENTE.");
+
+}
+
+async function rejectOrder(orderId) {
+
+  const { data: order, error } = await db
+    .from("gestao_loja_pedidos")
+    .select("id, numero, status, valor_total")
+    .eq("id", orderId)
+    .eq("id_loja", currentStore.id_loja)
+    .single();
+
+  if (error) {
+    alert("Erro ao carregar pedido:\n" + error.message);
+    return;
+  }
+
+  if (!isNewStatus(order.status)) {
+    alert("Somente pedidos com status Novo podem ser recusados.");
+    return;
+  }
+
+  openRejectOrderModal(order);
+
+}
+
+function openRejectOrderModal(order) {
+
+  const modal = document.getElementById("modal");
+
+  modal.classList.remove("hidden");
+
+  document.querySelector(".modal-card").style.maxWidth = "520px";
+
+  document.getElementById("modalTitle").textContent =
+    `Recusar pedido #${order.numero}`;
+
+  document.getElementById("modalContent").innerHTML = `
+    <p class="muted" style="margin-top:0;">
+      Informe o motivo da recusa. O cliente verá esta observação.
+    </p>
+
+    <div class="form-group full">
+      <label>Motivo da recusa *</label>
+      <textarea
+        id="rejectReason"
+        rows="5"
+        placeholder="Ex.: Produto indisponível em estoque, prazo inviável, dados de entrega incompletos..."
+      ></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        onclick="closeModal()"
+      >
+        Voltar
+      </button>
+      <button
+        type="button"
+        class="btn btn-danger"
+        onclick="confirmRejectOrder(${order.id})"
+      >
+        Confirmar recusa
+      </button>
+    </div>
+  `;
+
+  setTimeout(() => {
+    document.getElementById("rejectReason")?.focus();
+  }, 50);
+
+}
+
+async function confirmRejectOrder(orderId) {
+
+  const reason =
+    (document.getElementById("rejectReason")?.value || "").trim();
+
+  if (!reason) {
+    alert("Informe o motivo da recusa.");
+    return;
+  }
+
+  if (reason.length < 5) {
+    alert("O motivo da recusa precisa ter pelo menos 5 caracteres.");
+    return;
+  }
+
+  const { error } = await db
+    .from("gestao_loja_pedidos")
+    .update({
+      status: "Recusado",
+      motivo_recusa: reason,
+      recusado_em: new Date().toISOString(),
+      recusado_por: getCurrentUserId(),
+      aprovado_em: null,
+      aprovado_por: null
+    })
+    .eq("id", orderId)
+    .eq("id_loja", currentStore.id_loja);
+
+  if (error) {
+    alert("Erro ao recusar pedido:\n" + error.message);
+    return;
+  }
+
+  closeModal();
+  await loadQuotes();
+
+  alert("Pedido recusado. O cliente poderá ver o motivo.");
 
 }
 
@@ -3508,6 +3812,18 @@ async function generateQuotePDF(quoteId) {
           line-height: 1.5;
         }
 
+        .reject-box {
+          margin-top: 20px;
+          padding: 12px;
+          background: #fdecec;
+          border-left: 4px solid #b42318;
+          border-radius: 6px;
+        }
+
+        .reject-box strong {
+          color: #b42318;
+        }
+
         .footer {
           margin-top: 40px;
           padding-top: 15px;
@@ -3651,6 +3967,19 @@ async function generateQuotePDF(quoteId) {
 
             </div>
           `
+      }
+
+
+      ${
+        isRejectedStatus(quote.status) && quote.motivo_recusa
+          ? `
+            <div class="reject-box">
+              <strong>PEDIDO RECUSADO</strong><br>
+              <span class="info-label">Motivo:</span>
+              ${escapeHtml(quote.motivo_recusa)}
+            </div>
+          `
+          : ""
       }
 
 

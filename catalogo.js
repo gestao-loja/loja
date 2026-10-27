@@ -2043,7 +2043,7 @@ async function finishCatalogOrder() {
         cliente_id: clienteId,
         numero: proximoNumero, // <--- O NÚMERO CALCULADO É ENVIADO AQUI
         data_pedido: new Date().toISOString().split("T")[0],
-        status: "Pendente",
+        status: "Novo",
         tipo_entrega: "entrega",
         subtotal: subtotal,
         valor_total: subtotal,

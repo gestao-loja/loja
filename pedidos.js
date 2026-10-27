@@ -10,15 +10,7 @@ let editingOrderId = null;
    NÚMERO DO PEDIDO — sequencial POR LOJA
    ====================================================== */
 
-/*
- * Retorna a próxima sequência de número de pedido para a loja atual.
- * Conta quantos pedidos a loja já tem e soma 1.
- *
- * Como pedidos cancelados continuam na tabela (status = 'Cancelado'),
- * a contagem nunca "volta" e nunca colide.
- */
 async function proximaSequenciaPedido() {
-  // Busca o MAIOR número existente para esta loja, em vez de contar
   const result = await db
     .from("gestao_loja_pedidos")
     .select("numero")
@@ -30,12 +22,10 @@ async function proximaSequenciaPedido() {
     throw result.error;
   }
 
-  // Se não houver nenhum pedido, começa do 1
   if (!result.data || result.data.length === 0) {
     return 1;
   }
 
-  // Pega o maior número atual e soma 1
   const ultimoNumero = Number(result.data[0].numero) || 0;
   return ultimoNumero + 1;
 }
@@ -106,17 +96,26 @@ function formatDateTime(value) {
   return date.toLocaleString("pt-BR");
 }
 
+function getCurrentUserId() {
+  if (!currentUser) return null;
+  return currentUser.id || currentUser.user?.id || null;
+}
+
 
 /* ======================================================
    HELPERS DE STATUS
    ====================================================== */
+
+function normalizeStatus(value) {
+  return String(value || "").trim().toLowerCase();
+}
 
 function isNew(order) {
   if (!order) {
     return false;
   }
 
-  const status = String(order.status || "").trim().toLowerCase();
+  const status = normalizeStatus(order.status);
 
   return status === "novo" || status === "new";
 }
@@ -126,7 +125,7 @@ function isPending(order) {
     return false;
   }
 
-  const status = String(order.status || "").trim().toLowerCase();
+  const status = normalizeStatus(order.status);
 
   return status === "pendente" || status === "pending";
 }
@@ -136,9 +135,63 @@ function isConfirmed(order) {
     return false;
   }
 
-  const status = String(order.status || "").trim().toLowerCase();
+  const status = normalizeStatus(order.status);
 
   return status === "confirmado" || status === "confirmed";
+}
+
+function isOrcamento(order) {
+  if (!order) {
+    return false;
+  }
+
+  return normalizeStatus(order.status) === "orçamento";
+}
+
+function isRejected(order) {
+  if (!order) {
+    return false;
+  }
+
+  return normalizeStatus(order.status) === "recusado";
+}
+
+function isCancelled(order) {
+  if (!order) {
+    return false;
+  }
+
+  return normalizeStatus(order.status) === "cancelado";
+}
+
+function orderStatusClass(status) {
+  const normalized = normalizeStatus(status);
+
+  if (normalized === "novo" || normalized === "new") {
+    return "status-novo";
+  }
+
+  if (normalized === "pendente" || normalized === "pending") {
+    return "status-pendente";
+  }
+
+  if (normalized === "confirmado" || normalized === "confirmed") {
+    return "status-confirmado";
+  }
+
+  if (normalized === "orçamento") {
+    return "status-orcamento";
+  }
+
+  if (normalized === "recusado") {
+    return "status-recusado";
+  }
+
+  if (normalized === "cancelado") {
+    return "status-cancelado";
+  }
+
+  return "";
 }
 
 
@@ -370,7 +423,6 @@ function renderOrders() {
                 ? ` · IE ${client.inscricao_estadual}`
                 : "");
 
-            // Tipo de entrega
             let entregaCell = `<span class="muted">Entrega</span>`;
 
             if (isRetirada(order)) {
@@ -391,7 +443,8 @@ function renderOrders() {
               `;
             }
 
-            // NF-e
+            const status = order.status || "Pendente";
+
             const nota = (window.__notasPorPedido || {})[order.id];
 
             let nfCell = "<span class='muted'>—</span>";
@@ -421,7 +474,6 @@ function renderOrders() {
               `;
             }
 
-            // Pagamento
             const pagInfo = getPagamentoInfo(order);
 
             let pagCell = `
@@ -468,7 +520,11 @@ function renderOrders() {
 
                 <td>${entregaCell}</td>
 
-                <td>${escapeHtml(order.status || "Pendente")}</td>
+                <td>
+                  <span class="status ${orderStatusClass(status)}">
+                    ${escapeHtml(status)}
+                  </span>
+                </td>
 
                 <td>
                   <strong>${orderMoney(order.valor_total)}</strong>
@@ -1399,7 +1455,6 @@ function changeOrderClient(clientId) {
     return;
   }
 
-  // Só preenche se NÃO for retirada
   const tipo = getTipoEntregaFromForm();
 
   if (tipo === "retirada") {
@@ -1819,7 +1874,6 @@ async function saveOrder() {
   const valorTotalFinal = Number(valorTotal.toFixed(2));
 
   /* ---------- EDIÇÃO ---------- */
-  /* Não envia numero → banco preserva o existente. */
 
   if (editingOrderId) {
     const orderData = {
@@ -1950,7 +2004,6 @@ async function saveOrder() {
   }
 
   /* ---------- CRIAÇÃO ---------- */
-  /* Calcula o número POR LOJA antes de inserir. */
 
   try {
 
@@ -1959,7 +2012,6 @@ async function saveOrder() {
     const orderData = {
       id_loja: currentStore.id_loja,
 
-      // Número sequencial POR LOJA (não usa ID global)
       numero: numeroPedido,
 
       cliente_id: Number(clientId),
@@ -2142,7 +2194,6 @@ async function viewOrder(orderId) {
     return;
   }
 
-  // Nota fiscal
   const { data: nota } = await db
     .from("gestao_loja_notas_fiscais")
     .select("*")
@@ -2152,7 +2203,6 @@ async function viewOrder(orderId) {
     .limit(1)
     .maybeSingle();
 
-  // Pagamentos
   const { data: pagamentos } = await db
     .from("gestao_loja_movimentos_financeiros")
     .select("*")
@@ -2178,6 +2228,8 @@ async function viewOrder(orderId) {
   const valorTotalPedido = Number(order.valor_total || 0);
   const restante = Math.max(valorTotalPedido - totalPago, 0);
   const totalmentePago = restante <= 0.005;
+
+  const status = order.status || "Pendente";
 
   document.getElementById("modal").classList.remove("hidden");
 
@@ -2210,7 +2262,6 @@ async function viewOrder(orderId) {
       `;
     }).join("");
 
-  // Bloco NF-e
   let nfBlock = "";
 
   if (nota) {
@@ -2284,7 +2335,6 @@ async function viewOrder(orderId) {
     `;
   }
 
-  // Bloco Pagamentos
   let pagamentosBlock = "";
 
   if (
@@ -2380,7 +2430,6 @@ async function viewOrder(orderId) {
     `;
   }
 
-  // Bloco de endereço / retirada
   const entregaBlock = pedidoRetirada
     ? `
       <div
@@ -2407,6 +2456,37 @@ async function viewOrder(orderId) {
       </div>
     `;
 
+  // Bloco de recusa
+  const recusaBlock = isRejected(order) && order.motivo_recusa
+    ? `
+      <div
+        class="card"
+        style="
+          margin-top:20px;
+          border-left:4px solid #b42318;
+          background:#fdecec;
+        "
+      >
+        <h3 style="margin-top:0;color:#b42318;">
+          ❌ Pedido recusado
+        </h3>
+
+        <p style="white-space:pre-wrap;margin:8px 0 0;">
+          <strong>Motivo:</strong>
+          ${escapeHtml(order.motivo_recusa)}
+        </p>
+
+        ${
+          order.recusado_em
+            ? `<p class="muted" style="margin:6px 0 0;font-size:12px;">
+                 Recusado em ${formatDateTime(order.recusado_em)}
+               </p>`
+            : ""
+        }
+      </div>
+    `
+    : "";
+
   document.getElementById("modalContent").innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
       <div class="card">
@@ -2414,7 +2494,12 @@ async function viewOrder(orderId) {
 
         <p><strong>Número:</strong> #${order.numero}</p>
         <p><strong>Data:</strong> ${formatDate(order.data_pedido)}</p>
-        <p><strong>Status:</strong> ${escapeHtml(order.status || "Pendente")}</p>
+        <p>
+          <strong>Status:</strong>
+          <span class="status ${orderStatusClass(status)}">
+            ${escapeHtml(status)}
+          </span>
+        </p>
         <p><strong>Forma de pagamento:</strong> ${escapeHtml(order.forma_pagamento || "-")}</p>
         <p><strong>Prazo de entrega:</strong> ${escapeHtml(order.prazo_entrega || "-")}</p>
       </div>
@@ -2461,6 +2546,8 @@ async function viewOrder(orderId) {
         </p>
       </div>
     </div>
+
+    ${recusaBlock}
 
     ${entregaBlock}
 
@@ -2548,15 +2635,22 @@ async function viewOrder(orderId) {
         isNew(order)
           ? `
             <button class="btn btn-primary" onclick="acceptOrder(${order.id})">✓ Aceitar pedido</button>
-            <button class="btn btn-danger" onclick="cancelOrder(${order.id})">Cancelar pedido</button>
+            <button class="btn btn-danger" onclick="rejectNewOrder(${order.id})">✖ Recusar pedido</button>
+            <button class="btn btn-secondary" onclick="cancelOrder(${order.id})">Cancelar pedido</button>
           `
-          : isPending(order)
+          : isOrcamento(order)
             ? `
               <button class="btn btn-secondary" onclick="editOrder(${order.id})">Editar</button>
-              <button class="btn btn-primary" onclick="confirmOrder(${order.id})">Confirmar pedido</button>
-              <button class="btn btn-danger" onclick="cancelOrder(${order.id})">Cancelar pedido</button>
+              <button class="btn btn-primary" onclick="approveOrcamento(${order.id})">✓ Aprovar orçamento</button>
+              <button class="btn btn-danger" onclick="rejectOrcamento(${order.id})">✖ Recusar orçamento</button>
             `
-            : ""
+            : isPending(order)
+              ? `
+                <button class="btn btn-secondary" onclick="editOrder(${order.id})">Editar</button>
+                <button class="btn btn-primary" onclick="confirmOrder(${order.id})">Confirmar pedido</button>
+                <button class="btn btn-danger" onclick="cancelOrder(${order.id})">Cancelar pedido</button>
+              `
+              : ""
       }
 
       <button class="btn btn-secondary" onclick="closeModal()">Fechar</button>
@@ -2608,7 +2702,14 @@ async function acceptOrder(orderId) {
 
   const { error } = await db
     .from("gestao_loja_pedidos")
-    .update({ status: "Pendente" })
+    .update({
+      status: "Pendente",
+      aprovado_em: new Date().toISOString(),
+      aprovado_por: getCurrentUserId(),
+      recusado_em: null,
+      recusado_por: null,
+      motivo_recusa: null
+    })
     .eq("id", orderId)
     .eq("id_loja", currentStore.id_loja);
 
@@ -2639,8 +2740,8 @@ async function editOrder(orderId) {
     return;
   }
 
-  if (!isPending(order)) {
-    alert("Somente pedidos pendentes podem ser editados.");
+  if (!isPending(order) && !isOrcamento(order)) {
+    alert("Somente pedidos pendentes ou orçamentos podem ser editados.");
     return;
   }
 
@@ -2685,7 +2786,6 @@ async function editOrder(orderId) {
   document.getElementById("orderFreight").value = Number(order.frete || 0);
   document.getElementById("orderNotes").value = order.observacoes || "";
 
-  // Tipo de entrega
   const tipoEntrega =
     order.tipo_entrega ||
     (isRetirada(order) ? "retirada" : "entrega");
@@ -2748,10 +2848,8 @@ async function confirmOrder(orderId) {
   }
 
   try {
-    // VERIFICAÇÃO CRUCIAL: Se utiliza_estoque for falso, ignora a RPC
     if (currentStore.utiliza_estoque !== false) {
       
-      // LOJA USA ESTOQUE: Chama a RPC que valida e baixa o estoque
       const { error: rpcError } = await db.rpc(
         "gestao_loja_confirmar_pedido",
         { p_pedido_id: Number(orderId) }
@@ -2764,7 +2862,6 @@ async function confirmOrder(orderId) {
 
     } else {
       
-      // LOJA NÃO USA ESTOQUE: Altera o status diretamente, sem passar pela RPC
       const { error: updateError } = await db
         .from("gestao_loja_pedidos")
         .update({ status: "Confirmado" })
@@ -2843,6 +2940,196 @@ async function cancelOrder(orderId) {
   await loadOrders();
 
   alert("Pedido cancelado.");
+}
+
+
+/* ======================================================
+   APROVAR / RECUSAR ORÇAMENTO E PEDIDO NOVO
+   ====================================================== */
+
+async function approveOrcamento(orderId) {
+  const { data: order, error } = await db
+    .from("gestao_loja_pedidos")
+    .select("id, numero, status, valor_total")
+    .eq("id", orderId)
+    .eq("id_loja", currentStore.id_loja)
+    .single();
+
+  if (error) {
+    alert("Erro ao carregar orçamento:\n" + error.message);
+    return;
+  }
+
+  if (!isOrcamento(order)) {
+    alert("Somente orçamentos podem ser aprovados.");
+    return;
+  }
+
+  const confirmed = confirm(
+    `Aprovar o orçamento #${order.numero}?\n\n` +
+    `Valor: ${orderMoney(order.valor_total)}\n\n` +
+    `Ao aprovar, ele passará para PENDENTE ` +
+    `e poderá ser confirmado na tela de pedidos.`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const { error: updateError } = await db
+    .from("gestao_loja_pedidos")
+    .update({
+      status: "Pendente",           // ✅ aprovar = Pendente
+      aprovado_em: new Date().toISOString(),
+      aprovado_por: getCurrentUserId(),
+      recusado_em: null,
+      recusado_por: null,
+      motivo_recusa: null
+    })
+    .eq("id", orderId)
+    .eq("id_loja", currentStore.id_loja);
+
+  if (updateError) {
+    alert("Erro ao aprovar orçamento:\n" + updateError.message);
+    return;
+  }
+
+  closeModal();
+  await loadOrders();
+
+  alert(
+    "Orçamento aprovado.\n\n" +
+    "Agora ele está como PENDENTE e pode ser confirmado."
+  );
+}
+
+async function rejectOrcamento(orderId) {
+  const { data: order, error } = await db
+    .from("gestao_loja_pedidos")
+    .select("id, numero, status, valor_total")
+    .eq("id", orderId)
+    .eq("id_loja", currentStore.id_loja)
+    .single();
+
+  if (error) {
+    alert("Erro ao carregar orçamento:\n" + error.message);
+    return;
+  }
+
+  if (!isOrcamento(order)) {
+    alert("Somente orçamentos podem ser recusados por aqui.");
+    return;
+  }
+
+  openRejectOrderModal(order);
+}
+
+async function rejectNewOrder(orderId) {
+  const { data: order, error } = await db
+    .from("gestao_loja_pedidos")
+    .select("id, numero, status, valor_total")
+    .eq("id", orderId)
+    .eq("id_loja", currentStore.id_loja)
+    .single();
+
+  if (error) {
+    alert("Erro ao carregar pedido:\n" + error.message);
+    return;
+  }
+
+  if (!isNew(order)) {
+    alert("Somente pedidos novos podem ser recusados por aqui.");
+    return;
+  }
+
+  openRejectOrderModal(order);
+}
+
+function openRejectOrderModal(order) {
+  const modal = document.getElementById("modal");
+
+  modal.classList.remove("hidden");
+
+  document.querySelector(".modal-card").style.maxWidth = "520px";
+
+  document.getElementById("modalTitle").textContent =
+    `Recusar #${order.numero}`;
+
+  document.getElementById("modalContent").innerHTML = `
+    <p class="muted" style="margin-top:0;">
+      Informe o motivo da recusa. O cliente verá esta observação.
+    </p>
+
+    <div class="form-group full">
+      <label>Motivo da recusa *</label>
+
+      <textarea
+        id="rejectReason"
+        rows="5"
+        placeholder="Ex.: Produto indisponível em estoque, prazo inviável, dados incompletos..."
+      ></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        onclick="closeModal()"
+      >
+        Voltar
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-danger"
+        onclick="confirmRejectOrder(${order.id})"
+      >
+        Confirmar recusa
+      </button>
+    </div>
+  `;
+
+  setTimeout(() => {
+    document.getElementById("rejectReason")?.focus();
+  }, 50);
+}
+
+async function confirmRejectOrder(orderId) {
+  const reason =
+    (document.getElementById("rejectReason")?.value || "").trim();
+
+  if (!reason) {
+    alert("Informe o motivo da recusa.");
+    return;
+  }
+
+  if (reason.length < 5) {
+    alert("O motivo da recusa precisa ter pelo menos 5 caracteres.");
+    return;
+  }
+
+  const { error } = await db
+    .from("gestao_loja_pedidos")
+    .update({
+      status: "Recusado",
+      motivo_recusa: reason,
+      recusado_em: new Date().toISOString(),
+      recusado_por: getCurrentUserId(),
+      aprovado_em: null,
+      aprovado_por: null
+    })
+    .eq("id", orderId)
+    .eq("id_loja", currentStore.id_loja);
+
+  if (error) {
+    alert("Erro ao recusar:\n" + error.message);
+    return;
+  }
+
+  closeModal();
+  await loadOrders();
+
+  alert("Recusa registrada. O cliente poderá ver o motivo.");
 }
 
 
@@ -2946,6 +3233,16 @@ async function generateOrderPDF(orderId) {
         <div>${address}</div>
       </div>
     `;
+
+  const recusaPdfBlock = isRejected(order) && order.motivo_recusa
+    ? `
+      <div class="section" style="padding:12px;background:#fdecec;border-left:4px solid #b42318;border-radius:6px;">
+        <strong style="color:#b42318;">PEDIDO RECUSADO</strong><br>
+        <span style="font-weight:bold;">Motivo:</span>
+        ${escapeHtml(order.motivo_recusa)}
+      </div>
+    `
+    : "";
 
   const pdfWindow = window.open("", "_blank", "width=900,height=700");
 
@@ -3161,6 +3458,8 @@ async function generateOrderPDF(orderId) {
           </div>
         </div>
       </div>
+
+      ${recusaPdfBlock}
 
       ${entregaPdfBlock}
 
