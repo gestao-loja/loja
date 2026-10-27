@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lojas — Gestão Loja</title>
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="convites.css">
+  <link rel="stylesheet" href="lojas.css">
+
+</head>
+
+<body data-page="lojas">
+
+  <div id="app" class="app">
+    <div id="menu"></div>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>Lojas</h1>
+          <div class="muted" id="pageSubtitle">Gestão de lojas, bloqueio e período de teste</div>
+        </div>
+        <div class="user-info">
+          <span id="userEmail"></span>
+        </div>
+      </div>
+
+      <div id="content" class="lojas-page">
+
+        <div class="conv-card">
+          <div class="header-row">
+            <div>
+              <div class="conv-title">Lojas cadastradas</div>
+              <div class="conv-sub">
+                Apenas a loja matriz vê esta página. Bloqueie o acesso ou ajuste o período de teste.
+              </div>
+            </div>
+          </div>
+
+          <div class="lojas-toolbar">
+            <div class="search-wrapper">
+              <span class="search-icon">🔍</span>
+              <input type="search" id="filtroLojas" placeholder="Buscar por nome, CNPJ ou e-mail...">
+            </div>
+            <button class="conv-btn conv-btn-small btn-refresh" id="btnRecarregar">
+              <span>↻</span> Atualizar
+            </button>
+          </div>
+
+          <div id="lojasMsg"></div>
+          
+          <div class="table-container">
+            <div id="lojasLista">Carregando...</div>
+          </div>
+          
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <!-- Modal de Renovação -->
+  <div id="modal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+    <div style="background: #fff; width: 100%; max-width: 420px; padding: 24px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); margin: 20px;">
+      <h3 id="modalTitle" style="margin-top: 0; font-size: 20px; color: #0f172a; margin-bottom: 8px;">Renovar Assinatura</h3>
+      <div id="modalContent"></div>
+      <button onclick="closeModal()" style="margin-top: 20px; width: 100%; padding: 12px; background: #f1f5f9; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: #475569;">
+        Cancelar
+      </button>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+  <script src="lojas.js"></script>
+
+</body>
+</html>

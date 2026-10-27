@@ -233,8 +233,6 @@ async function loadUserContext() {
       throw new Error("Usuário autenticado não foi encontrado na tabela gestao_loja_usuarios.");
     }
 
-    console.log("Usuário carregado:", user);
-
     if (!user.ativo) {
       alert("Seu usuário está inativo.");
       await logout();
@@ -265,6 +263,27 @@ async function loadUserContext() {
     if (!store.id_loja) {
       throw new Error("A loja foi encontrada, mas não possui id_loja.");
     }
+
+    // --- VERIFICAÇÃO DE BLOQUEIO E TRIAL ---
+    if (Number(store.id_loja) !== 1) { // A matriz (loja 1) tem passe livre
+      const agora = new Date();
+      const trialExpirado = store.trial_fim && new Date(store.trial_fim) <= agora;
+
+      if (!store.ativo) {
+        await db.auth.signOut();
+        alert("O acesso desta loja foi bloqueado pela administração. Entre em contato com o suporte.");
+        window.location.replace("index.html");
+        return false;
+      }
+
+      if (trialExpirado) {
+        await db.auth.signOut();
+        alert("O período de teste desta loja expirou. Entre em contato para renovar o acesso.");
+        window.location.replace("index.html");
+        return false;
+      }
+    }
+    // ---------------------------------------
 
     currentStore = store;
     window.currentStore = currentStore;
@@ -314,9 +333,15 @@ async function loadMenu() {
       $("storeName").textContent = currentStore.nome_fantasia || currentStore.nome || "Loja";
     }
 
+    // Itens visíveis apenas para a loja matriz (loja 1)
     const convitesNav = menu.querySelector('[data-page="convites"]');
     if (convitesNav) {
       convitesNav.style.display = isLojaMatriz() ? "" : "none";
+    }
+
+    const lojasNav = menu.querySelector('[data-page="lojas"]');
+    if (lojasNav) {
+      lojasNav.style.display = isLojaMatriz() ? "" : "none";
     }
 
     setActiveNav();

@@ -1,0 +1,380 @@
+/* ============================================================
+   Página: Lojas (Gestão de lojas)
+   ============================================================ */
+
+/* Ocupa a tela toda, com limite confortável para monitores grandes */
+.lojas-page {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+/* --- Toolbar e Busca --- */
+.lojas-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 250px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.lojas-toolbar input[type="search"] {
+  width: 100%;
+  padding: 12px 14px 12px 40px; /* espaço para o ícone */
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #f8fafc;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.lojas-toolbar input[type="search"]:focus {
+  background: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.btn-refresh {
+  background: #fff !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 20px !important;
+  height: 44px;
+  font-weight: 600 !important;
+  transition: all 0.2s ease;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-refresh:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+}
+
+/* --- Tabela Larga --- */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.conv-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 0;
+  min-width: 900px; /* Garante que a tabela não esmague os dados */
+}
+
+.conv-table th {
+  background: #f8fafc;
+  padding: 16px 20px; /* Mais espaço interno */
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.conv-table td {
+  padding: 16px 20px;
+  vertical-align: middle;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 14px;
+  color: #334155;
+}
+
+.conv-table tr:last-child td {
+  border-bottom: none;
+}
+
+.conv-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.conv-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* --- Células Específicas --- */
+.cell-id {
+  font-family: monospace;
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 600;
+  width: 60px; /* ID fica compacto */
+}
+
+.cell-loja {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 250px; /* Garante espaço para nome e email */
+}
+
+.loja-nome {
+  font-weight: 700;
+  font-size: 15px; /* Um pouco maior */
+  color: #0f172a;
+}
+
+.loja-meta {
+  color: #64748b;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loja-meta .dot {
+  width: 4px;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 50%;
+}
+
+/* --- Select de Trial --- */
+.trial-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  background: #fff;
+  color: #1e293b;
+  cursor: pointer;
+  outline: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.trial-select:hover:not(:disabled) {
+  border-color: #94a3b8;
+}
+
+.trial-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.trial-select:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+/* --- Badges de Status --- */
+.badge {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge-ativa          { background: #dcfce7; color: #166534; }
+.badge-trial          { background: #dbeafe; color: #1e40af; }
+.badge-trial-expirado { background: #fef3c7; color: #92400e; }
+.badge-bloqueado      { background: #fee2e2; color: #991b1b; }
+
+/* --- Ações --- */
+.cell-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-action {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-block {
+  background: #fff;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+
+.btn-block:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+.btn-unblock {
+  background: #fff;
+  color: #10b981;
+  border-color: #6ee7b7;
+}
+
+.btn-unblock:hover {
+  background: #ecfdf5;
+  border-color: #10b981;
+}
+
+.btn-renew {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.btn-renew:hover {
+  background: #dbeafe;
+  border-color: #3b82f6;
+}
+
+/* --- Empty State --- */
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* ============================================================
+   MODAL DE RENOVAÇÃO
+   ============================================================ */
+.plan-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.plan-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  width: 100%;
+}
+
+.plan-btn:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.plan-btn span {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 400;
+}
+
+/* ============================================================
+   RESPONSIVIDADE (Transforma tabela em Cartões no Celular)
+   ============================================================ */
+@media (max-width: 900px) {
+  /* Esconde o cabeçalho da tabela */
+  .conv-table thead {
+    display: none;
+  }
+
+  /* Transforma a tabela em blocos */
+  .conv-table, .conv-table tbody, .conv-table tr, .conv-table td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Estiliza a linha como um cartão */
+  .conv-table tr {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  }
+
+  .conv-table td {
+    border: none;
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+  }
+
+  /* Adiciona labels virtuais antes das células */
+  .conv-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #64748b;
+    font-size: 13px;
+    text-align: left;
+    margin-right: 16px;
+  }
+
+  .cell-loja {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .cell-actions {
+    margin-top: 12px;
+    padding-top: 16px !important;
+    border-top: 1px dashed #e2e8f0 !important;
+    width: 100%;
+  }
+  
+  .cell-actions::before {
+    display: none; /* Esconde o label na área de botões */
+  }
+}

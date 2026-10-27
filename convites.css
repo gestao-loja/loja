@@ -1,0 +1,143 @@
+    .conv-page { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
+
+.conv-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .06);
+  margin-bottom: 20px;
+}
+
+.conv-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.conv-sub {
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.conv-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+}
+
+.conv-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+.conv-btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.conv-btn-danger {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.conv-btn-danger:hover { background: #fee2e2; }
+
+.conv-btn-copy {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.conv-btn-copy:hover { background: #dbeafe; }
+
+.conv-link-box {
+  margin-top: 18px;
+  padding: 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #166534;
+  word-break: break-all;
+  display: none;
+}
+
+.conv-link-box.visible { display: block; }
+
+.conv-link-url {
+  font-family: monospace;
+  font-size: 12px;
+  background: #fff;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-top: 8px;
+  word-break: break-all;
+}
+
+.conv-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.conv-table th,
+.conv-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.conv-table th {
+  font-weight: 700;
+  color: #555;
+  background: #f8fafc;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.badge-ativo { background: #f0fdf4; color: #166534; }
+.badge-usado { background: #e5e7eb; color: #6b7280; }
+.badge-expirado { background: #fef2f2; color: #b91c1c; }
+.badge-revogado { background: #fef3c7; color: #92400e; }
+.badge-bloqueado { background: #fef2f2; color: #991b1b; }
+
+.msg {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-top: 14px;
+}
+
+.msg.error { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; }
+.msg.success { color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; }
+
+.token-cell {
+  font-family: monospace;
+  font-size: 11px;
+  color: #555;
+}
+
+.action-cell {
+  white-space: nowrap;
+}
+
+.action-cell .conv-btn {
+  margin-right: 6px;
+}
+
+.action-cell .conv-btn:last-child {
+  margin-right: 0;
+}
