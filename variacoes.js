@@ -19,21 +19,39 @@ let currentImageUrl = null;
  * Como não há exclusão de variações, a sequência nunca
  * volta e nunca colide.
  */
+/*
+ * Retorna a próxima sequência de SKU de VARIAÇÃO para a loja atual.
+ * Busca o MAIOR número de sequência já gerado para a loja e soma 1.
+ * Isso evita colisões mesmo se variações forem excluídas no futuro.
+ */
 async function proximaSequenciaSkuVariacao() {
-
   const result = await db
     .from("gestao_loja_produtos_variacoes")
-    .select("id", { count: "exact", head: true })
-    .eq("id_loja", currentStore.id_loja);
+    .select("sku")
+    .eq("id_loja", currentStore.id_loja)
+    .not("sku", "is", null);
 
   if (result.error) {
     throw result.error;
   }
 
-  const total = result.count || 0;
+  let maiorSequencia = 0;
 
-  return total + 1;
+  if (result.data && result.data.length > 0) {
+    result.data.forEach(function(item) {
+      if (item.sku) {
+        const partes = item.sku.split("-");
+        const ultimaParte = partes[partes.length - 1];
+        const numero = parseInt(ultimaParte, 10);
+        
+        if (!isNaN(numero) && numero > maiorSequencia) {
+          maiorSequencia = numero;
+        }
+      }
+    });
+  }
 
+  return maiorSequencia + 1;
 }
 
 /*

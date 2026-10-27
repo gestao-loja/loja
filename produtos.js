@@ -25,70 +25,16 @@ let productImageNewUrl = null;
 
 
 /*
- * Gera um SKU único por loja no formato:
- *   PREFIXO-NNNNN
- * Ex.: CAM-00001
- *
- * O número é a sequência DENTRO da loja,
- * começando em 1 para cada loja.
+ * ============================================================
+ * OBSERVAÇÃO SOBRE O SKU
+ * ------------------------------------------------------------
+ * O SKU NÃO é mais gerado no JavaScript.
+ * Ele é gerado exclusivamente pelo trigger do banco:
+ *   - gerar_sku_produto (BEFORE INSERT em gestao_loja_produtos)
+ * A função SQL usa MAX(sequência da loja) + 1, garantindo
+ * numeração isolada por loja e sem colisão.
+ * ============================================================
  */
-function generateSku(nomeProduto, sequencia) {
-
-  const nome =
-    String(nomeProduto || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .toUpperCase();
-
-  const prefixos = [
-    { palavras: ["CANECA"], sigla: "CAN" },
-    { palavras: ["CHINELO"], sigla: "CHI" },
-    { palavras: ["CAMISETA", "CAMISA"], sigla: "CAM" }
-  ];
-
-  const regra =
-    prefixos.find(item =>
-      item.palavras.some(palavra =>
-        nome.startsWith(palavra)
-      )
-    );
-
-  const prefixo =
-    regra
-      ? regra.sigla
-      : nome.substring(0, 3) || "PRO";
-
-  const numero =
-    String(sequencia).padStart(5, "0");
-
-  return `${prefixo}-${numero}`;
-}
-
-
-/*
- * Retorna a próxima sequência de SKU para a loja atual.
- * Conta quantos produtos a loja já tem e soma 1.
- *
- * Como não há exclusão de produtos, a sequência
- * nunca volta e nunca colide.
- */
-async function proximaSequenciaSku() {
-
-  const result = await db
-    .from("gestao_loja_produtos")
-    .select("id", { count: "exact", head: true })
-    .eq("id_loja", currentStore.id_loja);
-
-  if (result.error) {
-    throw result.error;
-  }
-
-  const total = result.count || 0;
-
-  return total + 1;
-
-}
 
 
 async function loadCategories() {
@@ -1052,7 +998,7 @@ function productForm(p = {}) {
         <small class="muted">
 
           O SKU é gerado automaticamente
-          pelo sistema.
+          pelo sistema (sequência por loja).
 
         </small>
 
@@ -2012,19 +1958,14 @@ async function saveProduct(ev, id) {
 
       // ===== EDIÇÃO =====
       // Preserva o SKU existente do produto.
+      // O trigger do banco só gera SKU se NEW.sku vier nulo/vazio.
       const produtoAtual =
         products.find(
           p => String(p.id) === String(id)
         );
 
-      payload.sku =
-        produtoAtual?.sku || null;
-
-      // Se por algum motivo o produto estiver sem SKU,
-      // gera um novo usando a sequência da loja.
-      if (!payload.sku) {
-        const sequencia = await proximaSequenciaSku();
-        payload.sku = generateSku(nomeProduto, sequencia);
+      if (produtoAtual?.sku) {
+        payload.sku = produtoAtual.sku;
       }
 
       // 1. Atualiza o produto
@@ -2067,20 +2008,14 @@ async function saveProduct(ev, id) {
     } else {
 
       // ===== CADASTRO NOVO =====
-      // Calcula a sequência DENTRO da loja atual (começa em 1)
-      const sequencia = await proximaSequenciaSku();
-
-      // Gera o SKU já com a sequência correta da loja
-      const sku = generateSku(nomeProduto, sequencia);
-
-      // Insere o produto já com o SKU definitivo
+      // O SKU NÃO é enviado. O trigger BEFORE INSERT
+      // (gerar_sku_produto) preenche com:
+      //   PREFIXO-NNNNN
+      // onde NNNNN = MAX(sequência existente na loja) + 1.
       result = await db
         .from("gestao_loja_produtos")
-        .insert({
-          ...payload,
-          sku
-        })
-        .select("id")
+        .insert(payload)
+        .select("id, sku")
         .single();
 
       if (result.error) {
