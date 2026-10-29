@@ -308,13 +308,7 @@ async function loadQuotes() {
     `)
     .eq("id_loja", currentStore.id_loja)
     .in("status", [
-      "Orçamento",
-      "Novo",          // ✅ Adicionado
-      "Pendente",
-      "Aprovado",
-      "Confirmado",
-      "Recusado",
-      "Cancelado"
+      "Orçamento"
     ])
     .order("id", { ascending: false });
 

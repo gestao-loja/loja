@@ -5,7 +5,7 @@ let dashboardProducts = [];
 let dashboardVariations = [];
 let dashboardMovements = [];
 let dashboardClients = [];
-let dashboardTopProducts = [];
+let dashboardOrderItems = []; 
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -34,182 +34,65 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function loadDashboard() {
-
-  if (
-    !currentStore ||
-    !currentStore.id_loja
-  ) {
-    return;
-  }
+  if (!currentStore || !currentStore.id_loja) return;
 
   try {
-
     const [
       ordersResult,
       productsResult,
       variationsResult,
       movementsResult,
       clientsResult,
-      topProductsResult
+      orderItemsResult
     ] = await Promise.all([
 
-      db
-        .from(
-          "gestao_loja_pedidos"
-        )
-        .select(
-          "id,numero,cliente_id,data_pedido,status,valor_total"
-        )
-        .eq(
-          "id_loja",
-          currentStore.id_loja
-        )
-        .order(
-          "data_pedido",
-          {
-            ascending: false
-          }
-        ),
+      db.from("gestao_loja_pedidos")
+        .select("id,numero,cliente_id,data_pedido,status,valor_total")
+        .eq("id_loja", currentStore.id_loja)
+        .order("data_pedido", { ascending: false }),
 
-      db
-        .from(
-          "gestao_loja_produtos"
-        )
-        .select(
-          "id,nome,estoque,estoque_minimo,ativo"
-        )
-        .eq(
-          "id_loja",
-          currentStore.id_loja
-        ),
+      db.from("gestao_loja_produtos")
+        .select("id,nome,estoque,estoque_minimo,ativo")
+        .eq("id_loja", currentStore.id_loja),
 
-      db
-        .from(
-          "gestao_loja_produtos_variacoes"
-        )
-        .select(
-          "id,produto_id,nome,estoque,estoque_minimo,ativo"
-        )
-        .eq(
-          "id_loja",
-          currentStore.id_loja
-        ),
+      db.from("gestao_loja_produtos_variacoes")
+        .select("id,produto_id,nome,estoque,estoque_minimo,ativo")
+        .eq("id_loja", currentStore.id_loja),
 
-      db
-        .from(
-          "gestao_loja_movimentacoes_estoque"
-        )
-        .select(
-          "id,produto_id,variacao_id,tipo,entrada,quantidade,created_at"
-        )
-        .eq(
-          "id_loja",
-          currentStore.id_loja
-        )
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        ),
+      db.from("gestao_loja_movimentacoes_estoque")
+        .select("id,produto_id,variacao_id,tipo,entrada,quantidade,created_at")
+        .eq("id_loja", currentStore.id_loja)
+        .order("created_at", { ascending: false }),
 
-      db
-        .from(
-          "gestao_loja_clientes"
-        )
-        .select(
-          "id,nome"
-        )
-        .eq(
-          "id_loja",
-          currentStore.id_loja
-        ),
+      db.from("gestao_loja_clientes")
+        .select("id,nome")
+        .eq("id_loja", currentStore.id_loja),
 
-      db
-        .from(
-          "gestao_loja_view_produtos_vendidos"
-        )
-        .select(
-          "produto_id,produto,variacao_id,variacao,quantidade_vendida,valor_vendido"
-        )
-        .eq(
-          "id_loja",
-          currentStore.id_loja
-        )
-
+      // BUSCA DOS ITENS DIRETAMENTE DA TABELA (Sem depender da View)
+      db.from("gestao_loja_pedidos_itens")
+        .select("pedido_id, produto_id, variacao_id, quantidade, subtotal")
+        .eq("id_loja", currentStore.id_loja)
     ]);
 
-    if (ordersResult.error) {
-      console.error(
-        "Erro ao carregar pedidos:",
-        ordersResult.error
-      );
-    }
+    if (ordersResult.error) console.error("Erro pedidos:", ordersResult.error);
+    if (productsResult.error) console.error("Erro produtos:", productsResult.error);
+    if (variationsResult.error) console.error("Erro variações:", variationsResult.error);
+    if (movementsResult.error) console.error("Erro movimentações:", movementsResult.error);
+    if (clientsResult.error) console.error("Erro clientes:", clientsResult.error);
+    if (orderItemsResult.error) console.error("Erro itens:", orderItemsResult.error);
 
-    if (productsResult.error) {
-      console.error(
-        "Erro ao carregar produtos:",
-        productsResult.error
-      );
-    }
-
-    if (variationsResult.error) {
-      console.error(
-        "Erro ao carregar variações:",
-        variationsResult.error
-      );
-    }
-
-    if (movementsResult.error) {
-      console.error(
-        "Erro ao carregar movimentações:",
-        movementsResult.error
-      );
-    }
-
-    if (clientsResult.error) {
-      console.error(
-        "Erro ao carregar clientes:",
-        clientsResult.error
-      );
-    }
-
-    if (topProductsResult.error) {
-      console.error(
-        "Erro ao carregar produtos vendidos:",
-        topProductsResult.error
-      );
-    }
-
-    dashboardOrders =
-      ordersResult.data || [];
-
-    dashboardProducts =
-      productsResult.data || [];
-
-    dashboardVariations =
-      variationsResult.data || [];
-
-    dashboardMovements =
-      movementsResult.data || [];
-
-    dashboardClients =
-      clientsResult.data || [];
-
-    dashboardTopProducts =
-      topProductsResult.data || [];
+    dashboardOrders = ordersResult.data || [];
+    dashboardProducts = productsResult.data || [];
+    dashboardVariations = variationsResult.data || [];
+    dashboardMovements = movementsResult.data || [];
+    dashboardClients = clientsResult.data || [];
+    dashboardOrderItems = orderItemsResult.data || []; // Salva os itens
 
     renderDashboard();
 
   } catch (error) {
-
-    console.error(
-      "Erro ao carregar dashboard:",
-      error
-    );
-
+    console.error("Erro ao carregar dashboard:", error);
   }
-
 }
 
 function changeDashboardPeriod() {
@@ -1120,110 +1003,86 @@ function renderStockChart() {
 }
 
 function renderTopProducts() {
+  const container = $("topProducts");
+  if (!container) return;
 
-  const container =
-    $("topProducts");
+  // Filtra os pedidos válidos (Confirmados e no período selecionado)
+  const { start, end } = getPeriodDates();
+  
+  const validOrderIds = dashboardOrders.filter(order => {
+    const status = String(order.status || "").trim().toLowerCase();
+    const isConfirmed = status === "confirmado" || status === "confirmada";
+    
+    if (!isConfirmed || !order.data_pedido) return false;
+    
+    const date = new Date(order.data_pedido);
+    return date >= start && date <= end;
+  }).map(order => order.id);
 
-  if (!container) {
-    return;
-  }
+  // Pega os itens apenas desses pedidos
+  const validItems = dashboardOrderItems.filter(item => validOrderIds.includes(item.pedido_id));
 
-  if (
-    !dashboardTopProducts ||
-    !dashboardTopProducts.length
-  ) {
-
+  if (!validItems.length) {
     container.innerHTML = `
       <div class="dashboard-empty">
-        Nenhuma venda registrada.
+        Nenhuma venda confirmada no período.
       </div>
     `;
-
     return;
-
   }
 
-  const top =
-    dashboardTopProducts
-      .slice()
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          Number(
-            b.quantidade_vendida ||
-            0
-          ) -
-          Number(
-            a.quantidade_vendida ||
-            0
-          )
-      )
-      .slice(
-        0,
-        5
-      );
+  // Agrupa e cruza com os nomes dos produtos
+  const grouped = {};
+  
+  validItems.forEach(item => {
+    const pId = item.produto_id;
+    const vId = item.variacao_id || 'null';
+    const key = `${pId}_${vId}`;
+    
+    const produtoObj = dashboardProducts.find(p => Number(p.id) === Number(pId));
+    const variacaoObj = item.variacao_id ? dashboardVariations.find(v => Number(v.id) === Number(item.variacao_id)) : null;
 
-  container.innerHTML =
-    top
-      .map(
-        (
-          item,
-          index
-        ) => {
+    const pNome = produtoObj ? produtoObj.nome : "Produto";
+    const vNome = variacaoObj ? variacaoObj.nome : "";
 
-          const nome =
-            item.variacao &&
-            item.variacao !==
-              "Padrão"
-              ? `${item.produto} — ${item.variacao}`
-              : item.produto;
+    if (!grouped[key]) {
+      grouped[key] = {
+        produto: pNome,
+        variacao: vNome,
+        quantidade_vendida: 0,
+        valor_vendido: 0
+      };
+    }
+    
+    grouped[key].quantidade_vendida += Number(item.quantidade || 0);
+    grouped[key].valor_vendido += Number(item.subtotal || 0);
+  });
 
-          const qtd =
-            Number(
-              item.quantidade_vendida ||
-              0
-            ).toLocaleString(
-              "pt-BR"
-            );
+  // Transforma em array e ordena pelos mais vendidos
+  const top = Object.values(grouped).sort((a, b) => {
+    return Number(b.quantidade_vendida || 0) - Number(a.quantidade_vendida || 0);
+  }).slice(0, 5);
 
-          const receita =
-            money(
-              item.valor_vendido ||
-              0
-            );
+  // Renderiza o HTML na tela
+  container.innerHTML = top.map((item, index) => {
+    const nome = (item.variacao && item.variacao !== "Padrão") 
+      ? `${item.produto} — ${item.variacao}` 
+      : item.produto;
 
-          return `
-            <div class="ranking-item">
+    const qtd = Number(item.quantidade_vendida || 0).toLocaleString("pt-BR");
+    const receita = money(item.valor_vendido || 0);
 
-              <div class="ranking-position">
-                ${index + 1}
-              </div>
-
-              <div class="ranking-name">
-                ${escapeHtml(
-                  nome
-                )}
-                <div
-                  class="muted"
-                  style="font-size:10px;"
-                >
-                  ${receita}
-                </div>
-              </div>
-
-              <div class="ranking-quantity">
-                ${qtd} un
-              </div>
-
-            </div>
-          `;
-
-        }
-      )
-      .join("");
-
+    return `
+      <div class="ranking-item">
+        <div class="ranking-position">${index + 1}</div>
+        <div class="ranking-name">
+          ${escapeHtml(nome)}
+          <div class="muted" style="font-size:10px;">${receita}</div>
+        </div>
+        <div class="ranking-quantity">${qtd} un</div>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderRecentOrders() {

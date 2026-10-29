@@ -4,6 +4,10 @@ let products = [];
 
 let variations = [];
 
+let insumos = [];
+
+let insumoVariations = [];
+
 let purchases = [];
 
 let currentPurchaseItems = [];
@@ -196,6 +200,60 @@ async function loadPurchaseVariations() {
 
   variations =
     data || [];
+}
+
+async function loadPurchaseInsumos() {
+  const {
+    data,
+    error
+  } = await db
+    .from(
+      "gestao_loja_insumos"
+    )
+    .select("*")
+    .eq(
+      "id_loja",
+      currentStore.id_loja
+    )
+    .eq(
+      "ativo",
+      true
+    )
+    .order("nome");
+
+  if (error) {
+    insumos = [];
+    return;
+  }
+
+  insumos = data || [];
+}
+
+async function loadPurchaseInsumoVariations() {
+  const {
+    data,
+    error
+  } = await db
+    .from(
+      "gestao_loja_insumos_variacoes"
+    )
+    .select("*")
+    .eq(
+      "id_loja",
+      currentStore.id_loja
+    )
+    .eq(
+      "ativo",
+      true
+    )
+    .order("nome");
+
+  if (error) {
+    insumoVariations = [];
+    return;
+  }
+
+  insumoVariations = data || [];
 }
 
 async function loadPurchases() {
@@ -454,6 +512,32 @@ function buildPurchaseProductOptions(
         `
       ).join("")
     }
+  `;
+}
+
+function buildPurchaseItemOptions(
+  selectedValue = ""
+) {
+  const prodOptions = products.map(p => `
+    <option value="prod_${p.id}" ${selectedValue === `prod_${p.id}` ? "selected" : ""}>
+      ${escapeHtml(p.nome)}
+    </option>
+  `).join("");
+
+  const insOptions = insumos.map(i => `
+    <option value="ins_${i.id}" ${selectedValue === `ins_${i.id}` ? "selected" : ""}>
+      ${escapeHtml(i.nome)}
+    </option>
+  `).join("");
+
+  return `
+    <option value="">Selecione o item</option>
+    <optgroup label="Produtos">
+      ${prodOptions}
+    </optgroup>
+    <optgroup label="Insumos">
+      ${insOptions}
+    </optgroup>
   `;
 }
 
@@ -785,9 +869,6 @@ async function saveSupplier(ev) {
 
     closeModal();
 
-    // Se o usuário já estava com o modal de compra aberto,
-    // apenas recarrega a lista de fornecedores.
-    // Caso contrário, abre a nova compra já com ele selecionado.
     if (document.getElementById("purchaseSupplier")) {
       const select = document.getElementById("purchaseSupplier");
       select.innerHTML = buildSupplierOptions(newSupplier.id);
@@ -933,11 +1014,11 @@ function buildPurchaseForm() {
           <h3
             style="margin:0;"
           >
-            Produtos da compra
+            Produtos e Insumos da compra
           </h3>
 
           <div class="muted">
-            Adicione quantos produtos quiser
+            Adicione quantos itens quiser
             nesta mesma compra.
           </div>
         </div>
@@ -947,7 +1028,7 @@ function buildPurchaseForm() {
           class="btn btn-primary"
           onclick="addPurchaseItem()"
         >
-          + Adicionar produto
+          + Adicionar item
         </button>
       </div>
 
@@ -1099,20 +1180,14 @@ function openNewPurchase() {
 
 function addPurchaseItem() {
   currentPurchaseItems.push({
-    produto_id:
-      "",
-
-    variacao_id:
-      "",
-
-    quantidade:
-      1,
-
-    preco_unitario:
-      0,
-
-    subtotal:
-      0
+    item_type: "",
+    item_id: "",
+    produto_id: null,
+    insumo_id: null,
+    variacao_id: "",
+    quantidade: 1,
+    preco_unitario: 0,
+    subtotal: 0
   });
 
   renderPurchaseItems();
@@ -1156,7 +1231,7 @@ function renderPurchaseItems() {
         "
       >
         <span class="muted">
-          Nenhum produto adicionado.
+          Nenhum item adicionado.
         </span>
       </div>
     `;
@@ -1170,16 +1245,17 @@ function renderPurchaseItems() {
         item,
         index
       ) => {
-        const productVariations =
-          variations.filter(
-            variation =>
-              String(
-                variation.produto_id
-              ) ===
-              String(
-                item.produto_id
-              )
+        let itemVariations = [];
+
+        if (item.item_type === "prod" && item.produto_id) {
+          itemVariations = variations.filter(
+            variation => String(variation.produto_id) === String(item.produto_id)
           );
+        } else if (item.item_type === "ins" && item.insumo_id) {
+          itemVariations = insumoVariations.filter(
+            variation => String(variation.insumo_id) === String(item.insumo_id)
+          );
+        }
 
         const subtotal =
           (
@@ -1192,6 +1268,8 @@ function renderPurchaseItems() {
               item.preco_unitario
             ) || 0
           );
+
+        const selectedValue = item.item_type && item.item_id ? `${item.item_type}_${item.item_id}` : "";
 
         return `
           <div
@@ -1212,19 +1290,19 @@ function renderPurchaseItems() {
             >
               <div>
                 <label>
-                  Produto
+                  Produto / Insumo
                 </label>
 
                 <select
                   onchange="
-                    changePurchaseProduct(
+                    changePurchaseItem(
                       ${index},
                       this.value
                     )
                   "
                 >
-                  ${buildPurchaseProductOptions(
-                    item.produto_id
+                  ${buildPurchaseItemOptions(
+                    selectedValue
                   )}
                 </select>
               </div>
@@ -1242,21 +1320,21 @@ function renderPurchaseItems() {
                     )
                   "
                   ${
-                    !productVariations.length
+                    !itemVariations.length
                       ? "disabled"
                       : ""
                   }
                 >
                   <option value="">
                     ${
-                      productVariations.length
+                      itemVariations.length
                         ? "Selecione"
                         : "Sem variação"
                     }
                   </option>
 
                   ${
-                    productVariations.map(
+                    itemVariations.map(
                       variation => `
                         <option
                           value="${variation.id}"
@@ -1352,9 +1430,9 @@ function renderPurchaseItems() {
     ).join("");
 }
 
-function changePurchaseProduct(
+function changePurchaseItem(
   index,
-  productId
+  selectedValue
 ) {
   const item =
     currentPurchaseItems[
@@ -1365,29 +1443,29 @@ function changePurchaseProduct(
     return;
   }
 
-  item.produto_id =
-    productId;
+  const [type, id] = selectedValue.split("_");
 
-  item.variacao_id =
-    "";
+  item.item_type = type || "";
+  item.item_id = id || "";
+  item.variacao_id = "";
+  item.produto_id = null;
+  item.insumo_id = null;
 
-  const product =
-    products.find(
-      product =>
-        String(
-          product.id
-        ) ===
-        String(
-          productId
-        )
+  if (type === "prod") {
+    item.produto_id = id;
+    const product = products.find(
+      product => String(product.id) === String(id)
     );
-
-  item.preco_unitario =
-    product
-      ? Number(
-          product.preco_custo
-        ) || 0
-      : 0;
+    item.preco_unitario = product ? Number(product.preco_custo) || 0 : 0;
+  } else if (type === "ins") {
+    item.insumo_id = id;
+    const insumo = insumos.find(
+      insumo => String(insumo.id) === String(id)
+    );
+    item.preco_unitario = insumo ? Number(insumo.preco_custo) || 0 : 0;
+  } else {
+    item.preco_unitario = 0;
+  }
 
   renderPurchaseItems();
 
@@ -1411,40 +1489,36 @@ function changePurchaseVariation(
     variationId || "";
 
   if (variationId) {
-    const variation =
-      variations.find(
-        variation =>
-          String(
-            variation.id
-          ) ===
-          String(
-            variationId
-          )
+    if (item.item_type === "prod") {
+      const variation = variations.find(
+        variation => String(variation.id) === String(variationId)
       );
-
-    if (variation) {
-      item.preco_unitario =
-        Number(
-          variation.preco_custo
-        ) || 0;
+      if (variation) {
+        item.preco_unitario = Number(variation.preco_custo) || 0;
+      }
+    } else if (item.item_type === "ins") {
+      const variation = insumoVariations.find(
+        variation => String(variation.id) === String(variationId)
+      );
+      if (variation) {
+        item.preco_unitario = Number(variation.preco_custo) || 0;
+      }
     }
   } else {
-    const product =
-      products.find(
-        product =>
-          String(
-            product.id
-          ) ===
-          String(
-            item.produto_id
-          )
+    if (item.item_type === "prod") {
+      const product = products.find(
+        product => String(product.id) === String(item.produto_id)
       );
-
-    if (product) {
-      item.preco_unitario =
-        Number(
-          product.preco_custo
-        ) || 0;
+      if (product) {
+        item.preco_unitario = Number(product.preco_custo) || 0;
+      }
+    } else if (item.item_type === "ins") {
+      const insumo = insumos.find(
+        insumo => String(insumo.id) === String(item.insumo_id)
+      );
+      if (insumo) {
+        item.preco_unitario = Number(insumo.preco_custo) || 0;
+      }
     }
   }
 
@@ -1452,7 +1526,6 @@ function changePurchaseVariation(
 
   updatePurchaseSummary();
 }
-
 function changePurchaseQuantity(
   index,
   value
@@ -1478,7 +1551,7 @@ function changePurchaseQuantity(
 function changePurchasePrice(
   index,
   value
-) {
+  ) {
   if (
     !currentPurchaseItems[
       index
@@ -1585,7 +1658,7 @@ async function savePurchase() {
     !currentPurchaseItems.length
   ) {
     alert(
-      "Adicione pelo menos um produto à compra."
+      "Adicione pelo menos um produto ou insumo à compra."
     );
 
     return;
@@ -1594,9 +1667,9 @@ async function savePurchase() {
   for (
     const item of currentPurchaseItems
   ) {
-    if (!item.produto_id) {
+    if (!item.item_id) {
       alert(
-        "Selecione o produto de todos os itens."
+        "Selecione o produto/insumo de todos os itens."
       );
 
       return;
@@ -1607,7 +1680,7 @@ async function savePurchase() {
       item.quantidade <= 0
     ) {
       alert(
-        "Informe uma quantidade válida para todos os produtos."
+        "Informe uma quantidade válida para todos os itens."
       );
 
       return;
@@ -1753,9 +1826,10 @@ async function savePurchase() {
             purchase.id,
 
           produto_id:
-            Number(
-              item.produto_id
-            ),
+            item.item_type === "prod" ? Number(item.produto_id) : null,
+
+          insumo_id:
+            item.item_type === "ins" ? Number(item.insumo_id) : null,
 
           variacao_id:
             item.variacao_id
@@ -1908,6 +1982,20 @@ async function viewPurchase(
     return;
   }
 
+  // Busca os insumos para cruzar os nomes
+  const itemInsumoIds = items.filter(i => i.insumo_id).map(i => i.insumo_id);
+  let insumosMap = {};
+  if (itemInsumoIds.length > 0) {
+    const { data: insumosDb } = await db
+      .from("gestao_loja_insumos")
+      .select("id, nome")
+      .in("id", itemInsumoIds);
+      
+    if (insumosDb) {
+      insumosDb.forEach(i => { insumosMap[i.id] = i.nome; });
+    }
+  }
+
   const supplier =
     purchase.gestao_loja_fornecedores;
 
@@ -1930,29 +2018,34 @@ async function viewPurchase(
   const itemsHtml =
     (items || []).map(
       item => {
-        const product =
-          item.gestao_loja_produtos;
+        let nomeExibicao = "-";
+        let variacaoNome = "";
 
-        const variation =
-          item.gestao_loja_produtos_variacoes;
+        if (item.produto_id && item.gestao_loja_produtos) {
+          nomeExibicao = item.gestao_loja_produtos.nome;
+          if (item.gestao_loja_produtos_variacoes) {
+            variacaoNome = item.gestao_loja_produtos_variacoes.nome;
+          }
+        } else if (item.insumo_id) {
+          nomeExibicao = insumosMap[item.insumo_id] || "Insumo não encontrado";
+        }
 
         return `
           <tr>
             <td>
               ${escapeHtml(
-                product?.nome ||
-                "-"
+                nomeExibicao
               )}
 
               ${
-                variation?.nome
+                variacaoNome
                   ?
                     `
                       <br>
 
                       <small class="muted">
                         ${escapeHtml(
-                          variation.nome
+                          variacaoNome
                         )}
                       </small>
                     `
@@ -2085,7 +2178,7 @@ async function viewPurchase(
       "
     >
       <h3>
-        Produtos
+        Itens
       </h3>
 
       <table
@@ -2097,7 +2190,7 @@ async function viewPurchase(
         <thead>
           <tr>
             <th>
-              Produto
+              Produto / Insumo
             </th>
 
             <th>
@@ -2324,29 +2417,36 @@ async function editPurchase(
 
   currentPurchaseItems =
     (items || []).map(
-      item => ({
-        produto_id:
-          item.produto_id,
+      item => {
+        const isProd = !!item.produto_id;
+        const item_type = isProd ? "prod" : "ins";
+        const item_id = isProd ? item.produto_id : item.insumo_id;
 
-        variacao_id:
-          item.variacao_id ||
-          "",
+        return {
+          item_type,
+          item_id,
+          produto_id: item.produto_id,
+          insumo_id: item.insumo_id,
+          variacao_id:
+            item.variacao_id ||
+            "",
 
-        quantidade:
-          Number(
-            item.quantidade
-          ),
+          quantidade:
+            Number(
+              item.quantidade
+            ),
 
-        preco_unitario:
-          Number(
-            item.preco_unitario
-          ),
+          preco_unitario:
+            Number(
+              item.preco_unitario
+            ),
 
-        subtotal:
-          Number(
-            item.subtotal
-          )
-      })
+          subtotal:
+            Number(
+              item.subtotal
+            )
+        };
+      }
     );
 
   document.getElementById(
@@ -2438,7 +2538,7 @@ async function updatePurchase(
     !currentPurchaseItems.length
   ) {
     alert(
-      "Adicione pelo menos um produto."
+      "Adicione pelo menos um item."
     );
 
     return;
@@ -2447,9 +2547,9 @@ async function updatePurchase(
   for (
     const item of currentPurchaseItems
   ) {
-    if (!item.produto_id) {
+    if (!item.item_id) {
       alert(
-        "Selecione o produto de todos os itens."
+        "Selecione o produto/insumo de todos os itens."
       );
 
       return;
@@ -2597,9 +2697,10 @@ async function updatePurchase(
           purchaseId,
 
         produto_id:
-          Number(
-            item.produto_id
-          ),
+          item.item_type === "prod" ? Number(item.produto_id) : null,
+
+        insumo_id:
+          item.item_type === "ins" ? Number(item.insumo_id) : null,
 
         variacao_id:
           item.variacao_id
@@ -2694,7 +2795,7 @@ async function finalizePurchase(
           purchase.valor_total
         )
       }\n\n` +
-      `Todos os produtos desta compra serão adicionados ao estoque.`
+      `Todos os itens desta compra serão adicionados ao estoque.`
     );
 
   if (!confirmed) {
@@ -2723,7 +2824,7 @@ async function finalizePurchase(
   await loadPurchases();
 
   alert(
-    "Compra finalizada com sucesso. Os produtos foram adicionados ao estoque."
+    "Compra finalizada com sucesso. Os itens foram adicionados ao estoque."
   );
 }
 
@@ -2832,7 +2933,9 @@ document.addEventListener(
       await Promise.all([
         loadSuppliers(),
         loadPurchaseProducts(),
-        loadPurchaseVariations()
+        loadPurchaseVariations(),
+        loadPurchaseInsumos(),
+        loadPurchaseInsumoVariations()
       ]);
 
       await loadPurchases();
