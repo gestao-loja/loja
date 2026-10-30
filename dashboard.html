@@ -78,33 +78,20 @@
         id="content"
       >
 
-        <div class="dashboard-toolbar">
-
-          <select
-            id="dashboardPeriod"
-            onchange="changeDashboardPeriod()"
-          >
-
-            <option value="today">
-              Hoje
-            </option>
-
-            <option
-              value="7"
-              selected
-            >
-              Últimos 7 dias
-            </option>
-
-            <option value="30">
-              Últimos 30 dias
-            </option>
-
-            <option value="month">
-              Este mês
-            </option>
-
-          </select>
+        <div class="dashboard-toolbar" style="position: relative; z-index: 9999;">
+          
+          <div class="custom-dropdown" id="periodDropdown">
+            <button type="button" class="custom-dropdown-btn" onclick="togglePeriodDropdown(event)">
+              <span id="selectedPeriodLabel">Últimos 7 dias</span>
+              <span style="font-size: 10px; margin-left: 8px;">▼</span>
+            </button>
+            <div class="custom-dropdown-content" id="periodDropdownContent">
+              <button type="button" onclick="selectDashboardPeriod('today', 'Hoje')">Hoje</button>
+              <button type="button" onclick="selectDashboardPeriod('7', 'Últimos 7 dias')">Últimos 7 dias</button>
+              <button type="button" onclick="selectDashboardPeriod('30', 'Últimos 30 dias')">Últimos 30 dias</button>
+              <button type="button" onclick="selectDashboardPeriod('month', 'Este mês')">Este mês</button>
+            </div>
+          </div>
 
           <button
             class="btn btn-secondary"
@@ -463,15 +450,68 @@
       margin-bottom: 18px;
     }
 
-    .dashboard-toolbar select {
+    /* NOVOS ESTILOS DO DROPDOWN CUSTOMIZADO */
+    .custom-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .custom-dropdown-btn {
       min-width: 150px;
       padding: 9px 12px;
       border: 1px solid #d9dde5;
       border-radius: 7px;
       background: white;
       color: #343a46;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-family: inherit;
     }
 
+    .custom-dropdown-btn:hover {
+      background: #f9fafb;
+    }
+
+    .custom-dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background-color: white;
+      min-width: 160px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.15);
+      border: 1px solid #d9dde5;
+      border-radius: 7px;
+      z-index: 99999;
+      overflow: hidden;
+      flex-direction: column;
+    }
+
+    .custom-dropdown-content button {
+      background: none;
+      border: none;
+      color: #343a46;
+      padding: 10px 14px;
+      text-align: left;
+      width: 100%;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .custom-dropdown-content button:hover {
+      background-color: #f3f4f6;
+    }
+
+    .custom-dropdown.show .custom-dropdown-content {
+      display: flex;
+    }
+
+    /* RESTO DO CSS ORIGINAL */
     .dashboard-cards {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -862,6 +902,36 @@
     }
 
   </style>
+
+  <!-- SCRIPT DO DROPDOWN -->
+  <script>
+    function togglePeriodDropdown(event) {
+      event.stopPropagation();
+      const dropdown = document.getElementById("periodDropdown");
+      if (dropdown) dropdown.classList.toggle("show");
+    }
+
+    function selectDashboardPeriod(value, label) {
+      dashboardPeriod = value;
+      
+      const labelEl = document.getElementById("selectedPeriodLabel");
+      if (labelEl) labelEl.textContent = label;
+      
+      const dropdown = document.getElementById("periodDropdown");
+      if (dropdown) dropdown.classList.remove("show");
+      
+      if (typeof renderDashboard === "function") {
+        renderDashboard();
+      }
+    }
+
+    document.addEventListener("click", function(event) {
+      const dropdown = document.getElementById("periodDropdown");
+      if (dropdown && !dropdown.contains(event.target)) {
+        dropdown.classList.remove("show");
+      }
+    });
+  </script>
 
 </body>
 
