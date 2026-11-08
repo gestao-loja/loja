@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendário de Entregas - Gestão Loja</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js" defer></script>
+  <script src="pedidos.js" defer></script>
+  
+  <style>
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+    .calendar-day-name { text-align: center; font-weight: bold; color: #666; padding-bottom: 10px; font-size: 12px; text-transform: uppercase; }
+    .calendar-day { min-height: 100px; border: 1px solid #eee; border-radius: 8px; padding: 8px; background: #fafafa; transition: 0.2s; }
+    .calendar-day.today { border-color: #4f46e5; background: #eef2ff; }
+    .calendar-day.empty { background: transparent; border: none; }
+    .day-number { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 5px; }
+    
+    /* Estilo do botão do cliente */
+    .event-badge { display: block; width: 100%; text-align: left; border: none; font-size: 11px; padding: 4px 6px; border-radius: 4px; margin-bottom: 4px; background: #dbeafe; color: #1e40af; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; transition: filter 0.2s; }
+    .event-badge.retirada { background: #ede9fe; color: #5145cd; }
+    .event-badge:hover { filter: brightness(0.9); }
+    
+    #loadingCalendario { padding: 20px; color: #666; text-align: center; }
+  </style>
+</head>
+<body data-page="calendario_entregas">
+  <div id="menu"></div>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <button class="btn btn-secondary" onclick="go('pedidos')" style="margin-bottom: 10px;">&larr; Voltar aos Pedidos</button>
+        <h1>Calendário de Entregas</h1>
+        <div class="muted">Visualize as datas previstas dos seus pedidos</div>
+      </div>
+    </div>
+
+    <section class="content">
+      <div id="loadingCalendario">Buscando pedidos...</div>
+      
+      <div class="calendar-header" id="calendarHeader" style="display: none;">
+        <button class="btn btn-secondary" onclick="mudarMes(-1)">← Mês Anterior</button>
+        <h2 id="mesAnoAtual" style="margin:0; font-size:20px;"></h2>
+        <button class="btn btn-secondary" onclick="mudarMes(1)">Próximo Mês →</button>
+      </div>
+      
+      <div class="calendar-grid" id="calendarGrid" style="display: none;"></div>
+    </section>
+  </main>
+
+  <!-- ESTRUTURA DO MODAL (Para abrir os detalhes do pedido) -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-card" style="max-width:900px;">
+      <div class="modal-head">
+        <h2 id="modalTitle">Pedido</h2>
+        <button class="close" onclick="closeModal()">×</button>
+      </div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    let dataAtual = new Date();
+    let pedidosAgrupados = {};
+
+    document.addEventListener("DOMContentLoaded", () => {
+      let tentativas = 0;
+      const interval = setInterval(async () => {
+        tentativas++;
+        if (window.currentStore && window.currentStore.id_loja) {
+          clearInterval(interval);
+          await carregarCalendario();
+        } else if (tentativas > 50) { 
+          clearInterval(interval);
+          document.getElementById("loadingCalendario").innerHTML = "<span style='color:red'>Erro: Não foi possível carregar os dados da loja. Faça login novamente.</span>";
+        }
+      }, 200);
+    });
+
+    async function carregarCalendario() {
+      try {
+        // ALTERAÇÃO AQUI: Adicionando o JOIN para trazer o nome do cliente
+        const { data, error } = await db.from("gestao_loja_pedidos")
+          .select(`
+            id, numero, data_previsao_entrega, tipo_entrega, status,
+            gestao_loja_clientes ( nome )
+          `)
+          .eq("id_loja", window.currentStore.id_loja);
+
+        if (error) throw error;
+
+        pedidosAgrupados = {};
+
+        (data || []).forEach(p => {
+          if (p.data_previsao_entrega && p.status !== 'Cancelado' && p.status !== 'Recusado') {
+             
+             let raw = String(p.data_previsao_entrega).trim();
+             if (raw.includes('T')) raw = raw.split('T')[0];
+             
+             if (!pedidosAgrupados[raw]) pedidosAgrupados[raw] = [];
+             pedidosAgrupados[raw].push(p);
+          }
+        });
+
+        document.getElementById("loadingCalendario").style.display = "none";
+        document.getElementById("calendarHeader").style.display = "flex";
+        document.getElementById("calendarGrid").style.display = "grid";
+
+        renderizarCalendario();
+
+      } catch (err) {
+        console.error("Erro:", err);
+        document.getElementById("loadingCalendario").innerHTML = `<span style='color:red'>Erro no banco de dados: ${err.message}</span>`;
+      }
+    }
+
+    function renderizarCalendario() {
+      const ano = dataAtual.getFullYear();
+      const mes = dataAtual.getMonth();
+      const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      
+      document.getElementById("mesAnoAtual").textContent = `${meses[mes]} ${ano}`;
+
+      const primeiroDiaSemana = new Date(ano, mes, 1).getDay();
+      const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+      
+      const hoje = new Date();
+      const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+
+      let html = "";
+      const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+      diasSemana.forEach(d => { html += `<div class="calendar-day-name">${d}</div>`; });
+
+      for (let i = 0; i < primeiroDiaSemana; i++) {
+        html += `<div class="calendar-day empty"></div>`;
+      }
+
+      for (let dia = 1; dia <= diasNoMes; dia++) {
+        const dataStr = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+        const isHoje = dataStr === hojeStr;
+        const eventos = pedidosAgrupados[dataStr] || [];
+
+        html += `<div class="calendar-day ${isHoje ? 'today' : ''}">
+          <div class="day-number">${dia}</div>
+          ${eventos.map(ev => {
+            // Pega o nome do cliente, se não tiver, usa "Cliente"
+            const nomeCliente = ev.gestao_loja_clientes?.nome || "Cliente";
+            // Pega apenas o primeiro nome para caber no quadradinho
+            const primeiroNome = nomeCliente.split(' ')[0];
+
+            return `
+              <button class="event-badge ${ev.tipo_entrega === 'retirada' ? 'retirada' : ''}" onclick="viewOrder(${ev.id})" title="Pedido #${ev.numero} - ${nomeCliente}">
+                ${primeiroNome}
+              </button>
+            `;
+          }).join('')}
+        </div>`;
+      }
+
+      document.getElementById("calendarGrid").innerHTML = html;
+    }
+
+    function mudarMes(delta) {
+      dataAtual.setMonth(dataAtual.getMonth() + delta);
+      renderizarCalendario();
+    }
+  </script>
+</body>
+</html>

@@ -142,30 +142,17 @@
     </div>
 
     <section class="content">
-      <div
-        style="
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          gap:15px;
-          margin-bottom:20px;
-          flex-wrap:wrap;
-        "
-      >
-        <button
-          class="btn btn-primary"
-          onclick="openNewOrder()"
-        >
-          + Novo pedido
-        </button>
-
-        <button
-          class="btn btn-secondary"
-          onclick="openClientForm()"
-        >
-          + Cadastrar cliente
-        </button>
-      </div>
+<div style="display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:20px; flex-wrap:wrap;">
+  <div style="display: flex; gap: 10px;">
+    <button class="btn btn-primary" onclick="openNewOrder()">+ Novo pedido</button>
+    <button class="btn btn-secondary" onclick="openClientForm()">+ Cadastrar cliente</button>
+  </div>
+  
+  <!-- NOVO BOTÃO DO CALENDÁRIO -->
+  <button class="btn btn-secondary" onclick="go('calendario_entregas')" style="background: #e0f2fe; color: #0369a1;">
+    📅 Ver Calendário de Entregas
+  </button>
+</div>
 
       <div id="ordersContainer">
         Carregando pedidos...
