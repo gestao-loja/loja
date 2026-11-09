@@ -6,6 +6,9 @@
   <title>Gestão Loja</title>
 
   <link rel="stylesheet" href="styles.css">
+  
+  <!-- Força um favicon vazio para evitar que o navegador escreva "GL" na tela -->
+  <link rel="icon" href="data:,">
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -18,6 +21,7 @@
 
     .login-page {
       min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -58,6 +62,7 @@
       max-width: 430px;
       position: relative;
       z-index: 2;
+      margin: auto;
     }
 
     .login-card {
@@ -77,6 +82,7 @@
       margin-bottom: 24px;
     }
 
+    /* Correção do logo: garante que o texto fique no centro e não vaze */
     .brand-icon {
       width: 68px;
       height: 68px;
@@ -90,6 +96,15 @@
       letter-spacing: -1px;
       background: linear-gradient(135deg, #2563eb, #4f46e5);
       box-shadow: 0 12px 25px rgba(79, 70, 229, .28);
+      overflow: hidden; /* Impede que qualquer coisa vaze para fora do quadrado */
+      position: relative;
+    }
+
+    /* Se você tiver uma imagem no logo, ela se ajusta perfeitamente */
+    .brand-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .login-header {
@@ -216,7 +231,6 @@
       font-size: 12px;
     }
 
-    /* Botão "Criar nova loja" */
     .signup-link-wrapper {
       display: none;
       text-align: center;
@@ -274,7 +288,10 @@
       <section class="login-card">
 
         <div class="brand">
-          <div class="brand-icon">GL</div>
+          <!-- O texto "GL" agora está DENTRO do quadrado, de forma isolada -->
+          <div class="brand-icon">
+            <span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">GL</span>
+          </div>
         </div>
 
         <div class="login-header">
@@ -330,7 +347,7 @@
 
         <div id="loginMessage"></div>
 
-        <!-- Botão "Criar nova loja" — só aparece se houver token na URL -->
+        <!-- Botão "Criar nova loja" -->
         <div id="signupLinkWrapper" class="signup-link-wrapper">
           <a id="signupLink" class="signup-link" href="cadastro.html">
             🎉 Criar nova loja
@@ -351,32 +368,17 @@
   <script src="app.js"></script>
 
   <script>
-    /* =========================================================
-       BOTÃO "CRIAR NOVA LOJA"
-       Regra: se a URL tem ?token=..., mostra o botão e aponta
-       direto para cadastro.html?token=...
-       Não valida nada. Não depende de window.db.
-       ========================================================= */
     (function configurarBotaoConvite() {
       const token = new URLSearchParams(window.location.search).get("token");
-
-      if (!token) {
-        console.log("[convite] Nenhum token na URL — botão escondido.");
-        return;
-      }
+      if (!token) return;
 
       const wrapper = document.getElementById("signupLinkWrapper");
       const link    = document.getElementById("signupLink");
 
-      if (!wrapper || !link) {
-        console.warn("[convite] Elementos do botão não encontrados.");
-        return;
+      if (wrapper && link) {
+        link.href = "cadastro.html?token=" + encodeURIComponent(token);
+        wrapper.classList.add("visible");
       }
-
-      link.href = "cadastro.html?token=" + encodeURIComponent(token);
-      wrapper.classList.add("visible");
-
-      console.log("[convite] Botão exibido com href:", link.href);
     })();
   </script>
 

@@ -18,13 +18,8 @@ async function proximaSequenciaOrcamento() {
     .order("numero", { ascending: false })
     .limit(1);
 
-  if (result.error) {
-    throw result.error;
-  }
-
-  if (!result.data || result.data.length === 0) {
-    return 1;
-  }
+  if (result.error) throw result.error;
+  if (!result.data || result.data.length === 0) return 1;
 
   const ultimoNumero = Number(result.data[0].numero) || 0;
   return ultimoNumero + 1;
@@ -48,9 +43,7 @@ function quoteNumber(value) {
 
 function getQuoteNumberValue(id) {
   const element = document.getElementById(id);
-  if (!element) {
-    return 0;
-  }
+  if (!element) return 0;
   return Number(String(element.value || "").replace(",", ".")) || 0;
 }
 
@@ -63,13 +56,9 @@ function getQuoteToday() {
 }
 
 function formatQuoteDate(value) {
-  if (!value) {
-    return "-";
-  }
+  if (!value) return "-";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
+  if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString("pt-BR");
 }
 
@@ -77,76 +66,31 @@ function normalizeQuoteStatus(status) {
   return String(status || "").trim().toLowerCase();
 }
 
-function isQuoteStatus(status) {
-  return normalizeQuoteStatus(status) === "orçamento";
-}
-
-function isNewStatus(status) {
-  return normalizeQuoteStatus(status) === "novo";
-}
-
-function isPendingStatus(status) {
-  return normalizeQuoteStatus(status) === "pendente";
-}
-
-function isApprovedStatus(status) {
-  const s = normalizeQuoteStatus(status);
-  return s === "aprovado" || s === "confirmado";
-}
-
-function isRejectedStatus(status) {
-  return normalizeQuoteStatus(status) === "recusado";
-}
-
-function isCancelledStatus(status) {
-  return normalizeQuoteStatus(status) === "cancelado";
-}
+function isQuoteStatus(status) { return normalizeQuoteStatus(status) === "orçamento"; }
+function isNewStatus(status) { return normalizeQuoteStatus(status) === "novo"; }
+function isPendingStatus(status) { return normalizeQuoteStatus(status) === "pendente"; }
+function isApprovedStatus(status) { const s = normalizeQuoteStatus(status); return s === "aprovado" || s === "confirmado"; }
+function isRejectedStatus(status) { return normalizeQuoteStatus(status) === "recusado"; }
+function isCancelledStatus(status) { return normalizeQuoteStatus(status) === "cancelado"; }
 
 function quoteStatusClass(status) {
   const normalized = normalizeQuoteStatus(status);
-
-  if (normalized === "orçamento") {
-    return "status-orcamento";
-  }
-
-  if (normalized === "novo") {
-    return "status-novo";
-  }
-
-  if (normalized === "pendente") {
-    return "status-pendente";
-  }
-
-  if (normalized === "confirmado" || normalized === "aprovado") {
-    return "status-confirmado";
-  }
-
-  if (normalized === "recusado") {
-    return "status-recusado";
-  }
-
-  if (normalized === "cancelado") {
-    return "status-cancelado";
-  }
-
+  if (normalized === "orçamento") return "status-orcamento";
+  if (normalized === "novo") return "status-novo";
+  if (normalized === "pendente") return "status-pendente";
+  if (normalized === "confirmado" || normalized === "aprovado") return "status-confirmado";
+  if (normalized === "recusado") return "status-recusado";
+  if (normalized === "cancelado") return "status-cancelado";
   return "";
 }
 
 function isPessoaJuridica(tipo) {
   const t = String(tipo || "").toLowerCase();
-  return (
-    t.includes("jurid") ||
-    t.includes("jurídica") ||
-    t.includes("juridica")
-  );
+  return (t.includes("jurid") || t.includes("jurídica") || t.includes("juridica"));
 }
 
 function getIndicadorIeLabel(value) {
-  const labels = {
-    "1": "1 - Contribuinte ICMS",
-    "2": "2 - Contribuinte isento",
-    "9": "9 - Não contribuinte"
-  };
+  const labels = { "1": "1 - Contribuinte ICMS", "2": "2 - Contribuinte isento", "9": "9 - Não contribuinte" };
   return labels[String(value)] || "9 - Não contribuinte";
 }
 
@@ -161,29 +105,16 @@ function getCurrentUserId() {
    ====================================================== */
 
 function isRetiradaQuote(quote) {
-  if (!quote) {
-    return false;
-  }
-
-  if (String(quote.tipo_entrega || "").toLowerCase() === "retirada") {
-    return true;
-  }
-
-  return (
-    String(quote.endereco_entrega || "")
-      .trim()
-      .toLowerCase() === "retirada na loja"
-  );
+  if (!quote) return false;
+  if (String(quote.tipo_entrega || "").toLowerCase() === "retirada") return true;
+  return (String(quote.endereco_entrega || "").trim().toLowerCase() === "retirada na loja");
 }
 
 function getTipoEntregaQuoteFromForm() {
-  const selected = document.querySelector(
-    'input[name="tipo_entrega_quote"]:checked'
-  );
+  const selected = document.querySelector('input[name="tipo_entrega_quote"]:checked');
   return selected ? selected.value : "entrega";
 }
 
-// NOVA FUNÇÃO: Calcula a data de previsão do orçamento
 function calcularDataPrevisaoQuote() {
   const dataPedido = document.getElementById("quoteDate").value;
   const prazo = document.getElementById("quoteDeliveryDeadline").value;
@@ -216,77 +147,29 @@ function calcularDataPrevisaoQuote() {
    ====================================================== */
 
 async function loadQuoteClients() {
-  const { data, error } = await db
-    .from("gestao_loja_clientes")
-    .select("*")
-    .eq("id_loja", currentStore.id_loja)
-    .eq("ativo", true)
-    .order("nome");
-
-  if (error) {
-    throw error;
-  }
-
+  const { data, error } = await db.from("gestao_loja_clientes").select("*").eq("id_loja", currentStore.id_loja).eq("ativo", true).order("nome");
+  if (error) throw error;
   clients = data || [];
 }
 
 async function loadQuoteProducts() {
-  const { data, error } = await db
-    .from("gestao_loja_produtos")
-    .select("*")
-    .eq("id_loja", currentStore.id_loja)
-    .eq("ativo", true)
-    .order("nome");
-
-  if (error) {
-    throw error;
-  }
-
+  const { data, error } = await db.from("gestao_loja_produtos").select("*").eq("id_loja", currentStore.id_loja).eq("ativo", true).order("nome");
+  if (error) throw error;
   products = data || [];
 }
 
 async function loadQuoteVariations() {
-  const { data, error } = await db
-    .from("gestao_loja_produtos_variacoes")
-    .select("*")
-    .eq("id_loja", currentStore.id_loja)
-    .eq("ativo", true)
-    .order("nome");
-
-  if (error) {
-    throw error;
-  }
-
+  const { data, error } = await db.from("gestao_loja_produtos_variacoes").select("*").eq("id_loja", currentStore.id_loja).eq("ativo", true).order("nome");
+  if (error) throw error;
   variations = data || [];
 }
 
 async function loadQuotes() {
-  const { data, error } = await db
-    .from("gestao_loja_pedidos")
-    .select(`
-      *,
-      gestao_loja_clientes (
-        id,
-        nome,
-        telefone,
-        whatsapp,
-        email,
-        cpf_cnpj,
-        tipo_cliente,
-        inscricao_estadual,
-        indicador_ie
-      )
-    `)
-    .eq("id_loja", currentStore.id_loja)
-    .in("status", [
-      "Orçamento"
-    ])
-    .order("id", { ascending: false });
+  const { data, error } = await db.from("gestao_loja_pedidos").select(`
+      *, gestao_loja_clientes (id, nome, telefone, whatsapp, email, cpf_cnpj, tipo_cliente, inscricao_estadual, indicador_ie)
+    `).eq("id_loja", currentStore.id_loja).in("status", ["Orçamento"]).order("id", { ascending: false });
 
-  if (error) {
-    throw error;
-  }
-
+  if (error) throw error;
   quotes = data || [];
   renderQuotes();
 }
@@ -298,17 +181,10 @@ async function loadQuotes() {
 
 function renderQuotes() {
   const container = document.getElementById("quotesContainer");
-  if (!container) {
-    return;
-  }
+  if (!container) return;
 
   if (!quotes.length) {
-    container.innerHTML = `
-      <div class="card">
-        <h3>Nenhum orçamento cadastrado</h3>
-        <p class="muted">Clique em "+ Novo orçamento" para cadastrar o primeiro orçamento.</p>
-      </div>
-    `;
+    container.innerHTML = `<div class="card"><h3>Nenhum orçamento cadastrado</h3><p class="muted">Clique em "+ Novo orçamento" para cadastrar o primeiro orçamento.</p></div>`;
     return;
   }
 
@@ -317,13 +193,7 @@ function renderQuotes() {
       <table class="table">
         <thead>
           <tr>
-            <th>Nº</th>
-            <th>Cliente</th>
-            <th>Data</th>
-            <th>Previsão</th>
-            <th>Status</th>
-            <th>Valor</th>
-            <th style="text-align:right;">Ações</th>
+            <th>Nº</th><th>Cliente</th><th>Data</th><th>Previsão</th><th>Status</th><th>Valor</th><th style="text-align:right;">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -331,8 +201,6 @@ function renderQuotes() {
             const client = quote.gestao_loja_clientes;
             const clientName = client?.nome || "Cliente não informado";
             const status = quote.status || "Orçamento";
-
-            // NOVO: Coluna de Previsão na tabela
             const previsaoCell = quote.data_previsao_entrega 
               ? `<span style="color:#0284c7;font-weight:600;">${formatQuoteDate(quote.data_previsao_entrega)}</span>` 
               : `<span class="muted">—</span>`;
@@ -363,25 +231,11 @@ function renderQuotes() {
    ====================================================== */
 
 function buildQuoteClientOptions(selectedId = "") {
-  return `
-    <option value="">Selecione o cliente</option>
-    ${clients.map(client => `
-      <option value="${client.id}" ${String(client.id) === String(selectedId) ? "selected" : ""}>
-        ${escapeHtml(client.nome)}
-      </option>
-    `).join("")}
-  `;
+  return `<option value="">Selecione o cliente</option>` + clients.map(client => `<option value="${client.id}" ${String(client.id) === String(selectedId) ? "selected" : ""}>${escapeHtml(client.nome)}</option>`).join("");
 }
 
 function buildQuoteProductOptions(selectedId = "") {
-  return `
-    <option value="">Selecione o produto</option>
-    ${products.map(product => `
-      <option value="${product.id}" ${String(product.id) === String(selectedId) ? "selected" : ""}>
-        ${escapeHtml(product.nome)}
-      </option>
-    `).join("")}
-  `;
+  return `<option value="">Selecione o produto</option>` + products.map(product => `<option value="${product.id}" ${String(product.id) === String(selectedId) ? "selected" : ""}>${escapeHtml(product.nome)}</option>`).join("");
 }
 
 
@@ -407,53 +261,20 @@ function clientFormFromQuote() {
       </div>
       <div class="form-group">
         <label>Status</label>
-        <select id="c_ativo">
-          <option value="true" selected>Ativo</option>
-          <option value="false">Inativo</option>
-        </select>
+        <select id="c_ativo"><option value="true" selected>Ativo</option><option value="false">Inativo</option></select>
       </div>
-      <div class="form-group full">
-        <label>Nome / Razão social *</label>
-        <input type="text" id="c_nome" placeholder="Nome completo ou razão social">
+      <div class="form-group full"><label>Nome / Razão social *</label><input type="text" id="c_nome" placeholder="Nome completo ou razão social"></div>
+      <div class="form-group full pj-field hidden-field"><label>Nome fantasia</label><input type="text" id="c_nome_fantasia" placeholder="Nome fantasia da empresa"></div>
+      <div class="form-group"><label>CPF / CNPJ</label><input type="text" id="c_cpf_cnpj" placeholder="Somente números"></div>
+      <div class="form-group pj-field hidden-field"><label>Inscrição Estadual</label><input type="text" id="c_inscricao_estadual" placeholder="IE ou ISENTO"><small class="form-hint">Use ISENTO se não contribuinte</small></div>
+      <div class="form-group pj-field hidden-field"><label>Indicador de IE</label>
+        <select id="c_indicador_ie"><option value="1">1 - Contribuinte ICMS</option><option value="2">2 - Contribuinte isento</option><option value="9" selected>9 - Não contribuinte</option></select>
       </div>
-      <div class="form-group full pj-field hidden-field">
-        <label>Nome fantasia</label>
-        <input type="text" id="c_nome_fantasia" placeholder="Nome fantasia da empresa">
-      </div>
-      <div class="form-group">
-        <label>CPF / CNPJ</label>
-        <input type="text" id="c_cpf_cnpj" placeholder="Somente números">
-      </div>
-      <div class="form-group pj-field hidden-field">
-        <label>Inscrição Estadual</label>
-        <input type="text" id="c_inscricao_estadual" placeholder="IE ou ISENTO">
-        <small class="form-hint">Use ISENTO se não contribuinte</small>
-      </div>
-      <div class="form-group pj-field hidden-field">
-        <label>Indicador de IE</label>
-        <select id="c_indicador_ie">
-          <option value="1">1 - Contribuinte ICMS</option>
-          <option value="2">2 - Contribuinte isento</option>
-          <option value="9" selected>9 - Não contribuinte</option>
-        </select>
-      </div>
-      <div class="form-group pj-field hidden-field">
-        <label>Inscrição Municipal</label>
-        <input type="text" id="c_inscricao_municipal" placeholder="Opcional">
-      </div>
+      <div class="form-group pj-field hidden-field"><label>Inscrição Municipal</label><input type="text" id="c_inscricao_municipal" placeholder="Opcional"></div>
       <div class="form-section-title">Contato</div>
-      <div class="form-group">
-        <label>E-mail</label>
-        <input type="email" id="c_email" placeholder="cliente@email.com">
-      </div>
-      <div class="form-group">
-        <label>Telefone</label>
-        <input type="text" id="c_telefone" placeholder="Telefone">
-      </div>
-      <div class="form-group">
-        <label>WhatsApp</label>
-        <input type="text" id="c_whatsapp" placeholder="WhatsApp">
-      </div>
+      <div class="form-group"><label>E-mail</label><input type="email" id="c_email" placeholder="cliente@email.com"></div>
+      <div class="form-group"><label>Telefone</label><input type="text" id="c_telefone" placeholder="Telefone"></div>
+      <div class="form-group"><label>WhatsApp</label><input type="text" id="c_whatsapp" placeholder="WhatsApp"></div>
       <div class="form-section-title">Endereço</div>
       <div class="form-group"><label>CEP</label><input type="text" id="c_cep" placeholder="00000-000"></div>
       <div class="form-group"><label>Endereço</label><input type="text" id="c_endereco" placeholder="Rua, avenida..."></div>
@@ -475,13 +296,7 @@ function clientFormFromQuote() {
 function toggleClientTypeFieldsQuote() {
   const type = document.getElementById("c_tipo_cliente")?.value || "";
   const isPJ = isPessoaJuridica(type);
-  document.querySelectorAll(".pj-field").forEach(field => {
-    if (isPJ) {
-      field.classList.remove("hidden-field");
-    } else {
-      field.classList.add("hidden-field");
-    }
-  });
+  document.querySelectorAll(".pj-field").forEach(field => { field.classList.toggle("hidden-field", !isPJ); });
 }
 
 async function saveClientFromQuote() {
@@ -496,10 +311,7 @@ async function saveClientFromQuote() {
   if (isPJ) {
     if (cpfCnpj && cpfCnpj.length !== 14) { alert("O CNPJ deve ter 14 dígitos.\n\nValor informado: " + cpfCnpj); return; }
     const ie = (document.getElementById("c_inscricao_estadual")?.value || "").trim().toUpperCase();
-    if (!ie) {
-      const continuar = confirm("A Inscrição Estadual não foi informada.\n\nSem ela, o cliente será tratado como não contribuinte (indicador 9).\n\nDeseja continuar?");
-      if (!continuar) return;
-    }
+    if (!ie) { if (!confirm("A Inscrição Estadual não foi informada.\n\nSem ela, o cliente será tratado como não contribuinte (indicador 9).\n\nDeseja continuar?")) return; }
   } else {
     if (cpfCnpj && cpfCnpj.length !== 11) { alert("O CPF deve ter 11 dígitos.\n\nValor informado: " + cpfCnpj); return; }
   }
@@ -546,10 +358,7 @@ async function saveClientFromQuote() {
       openNewQuote();
       setTimeout(function() {
         const sel = document.getElementById("quoteClient");
-        if (sel) {
-          sel.value = String(newClient.id);
-          changeQuoteClient(newClient.id);
-        }
+        if (sel) { sel.value = String(newClient.id); changeQuoteClient(newClient.id); }
       }, 100);
     }
     alert("Cliente cadastrado com sucesso.");
@@ -571,29 +380,20 @@ function buildQuoteForm() {
       <div>
         <label>Cliente</label>
         <div style="display:flex;gap:8px;align-items:flex-end;">
-          <div style="flex:1;">
-            <select id="quoteClient" onchange="changeQuoteClient(this.value)">
-              ${buildQuoteClientOptions()}
-            </select>
-          </div>
+          <div style="flex:1;"><select id="quoteClient" onchange="changeQuoteClient(this.value)">${buildQuoteClientOptions()}</select></div>
           <button type="button" class="btn btn-secondary" onclick="openClientForm()">+ Cadastrar cliente</button>
         </div>
       </div>
-      <div>
-        <label>Data do orçamento</label>
-        <input type="date" id="quoteDate">
-      </div>
+      <div><label>Data do orçamento</label><input type="date" id="quoteDate"></div>
     </div>
 
     <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 20px; padding: 15px; background: #f8f9fa; border: 1px solid #e5e8ed; border-radius: 8px;">
       <strong style="font-size: 13px; color: #555d6d;">Tipo de entrega:</strong>
       <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; margin: 0;">
-        <input type="radio" name="tipo_entrega_quote" value="entrega" checked onchange="changeTipoEntregaQuote(this.value)" style="margin: 0; width: 16px; height: 16px;">
-        Entrega no endereço
+        <input type="radio" name="tipo_entrega_quote" value="entrega" checked onchange="changeTipoEntregaQuote(this.value)" style="margin: 0; width: 16px; height: 16px;"> Entrega no endereço
       </label>
       <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; margin: 0;">
-        <input type="radio" name="tipo_entrega_quote" value="retirada" onchange="changeTipoEntregaQuote(this.value)" style="margin: 0; width: 16px; height: 16px;">
-        Retirada na loja
+        <input type="radio" name="tipo_entrega_quote" value="retirada" onchange="changeTipoEntregaQuote(this.value)" style="margin: 0; width: 16px; height: 16px;"> Retirada na loja
       </label>
     </div>
 
@@ -613,10 +413,7 @@ function buildQuoteForm() {
         <div><label>Cidade</label><input type="text" id="quoteCity"></div>
       </div>
 
-      <div style="width:150px; margin-top:15px;">
-        <label>Estado</label>
-        <input type="text" id="quoteState" maxlength="2" placeholder="MG">
-      </div>
+      <div style="width:150px; margin-top:15px;"><label>Estado</label><input type="text" id="quoteState" maxlength="2" placeholder="MG"></div>
     </div>
 
     <div style="margin-top:25px;">
@@ -628,7 +425,6 @@ function buildQuoteForm() {
     </div>
 
     <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:15px; margin-top:20px;">
-      <!-- NOVO: Campo com cálculo de data -->
       <div>
         <label>Prazo de entrega</label>
         <input type="text" id="quoteDeliveryDeadline" placeholder="Ex.: 5 dias" oninput="calcularDataPrevisaoQuote()">
@@ -641,7 +437,18 @@ function buildQuoteForm() {
     </div>
 
     <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-top:20px;">
-      <div><label>Desconto</label><input type="number" id="quoteDiscount" value="0" min="0" step="0.01" oninput="updateQuoteSummary()"></div>
+      <!-- CALCULADORA DE DESCONTO -->
+      <div>
+        <label>Desconto</label>
+        <div style="display:flex; gap:5px;">
+          <input type="number" id="quoteDiscount" value="0" min="0" step="0.01" oninput="updateQuoteSummary()" style="flex:1;">
+          <select id="quoteDiscountType" onchange="updateQuoteSummary()" style="width:60px; border:1px solid var(--border); border-radius:6px; padding:0 5px; font-weight:600; background:#fff;">
+            <option value="R$">R$</option>
+            <option value="%">%</option>
+          </select>
+        </div>
+      </div>
+      
       <div><label>Acréscimo</label><input type="number" id="quoteIncrease" value="0" min="0" step="0.01" oninput="updateQuoteSummary()"></div>
       <div><label>Mão de obra</label><input type="number" id="quoteLabor" value="0" min="0" step="0.01" oninput="updateQuoteSummary()"></div>
       <div><label>Frete</label><input type="number" id="quoteFreight" value="0" min="0" step="0.01" oninput="updateQuoteSummary()"></div>
@@ -657,7 +464,7 @@ function buildQuoteForm() {
       <div class="order-summary-row"><span>Mão de obra</span><strong id="quoteSummaryLabor">R$ 0,00</strong></div>
       <div class="order-summary-row"><span>Frete</span><strong id="quoteSummaryFreight">R$ 0,00</strong></div>
       <div class="order-summary-row"><span>Acréscimo</span><strong id="quoteSummaryIncrease">R$ 0,00</strong></div>
-      <div class="order-summary-row"><span>Desconto</span><strong id="quoteSummaryDiscount">R$ 0,00</strong></div>
+      <div class="order-summary-row" style="color:#dc2626;"><span>Desconto</span><strong id="quoteSummaryDiscount">R$ 0,00</strong></div>
       <hr>
       <div class="order-summary-row" style="font-size:20px;"><strong>Total</strong><strong id="quoteSummaryTotal">R$ 0,00</strong></div>
     </div>
@@ -673,33 +480,24 @@ function changeTipoEntregaQuote(tipo) {
   const enderecoBlock = document.getElementById("quoteAddressBlock");
   const freteInput = document.getElementById("quoteFreight");
 
-  if (enderecoBlock) {
-    enderecoBlock.style.display = tipo === "retirada" ? "none" : "block";
-  }
-
+  if (enderecoBlock) enderecoBlock.style.display = tipo === "retirada" ? "none" : "block";
   if (freteInput) {
-    if (tipo === "retirada") {
-      freteInput.value = "0";
-      freteInput.disabled = true;
-    } else {
-      freteInput.disabled = false;
-    }
+    if (tipo === "retirada") { freteInput.value = "0"; freteInput.disabled = true; }
+    else { freteInput.disabled = false; }
   }
-
   updateQuoteSummary();
 }
 
 function openNewQuote() {
   editingQuoteId = null;
   currentQuoteItems = [];
-
-  const modal = document.getElementById("modal");
-  modal.classList.remove("hidden");
+  document.getElementById("modal").classList.remove("hidden");
   document.querySelector(".modal-card").style.maxWidth = "900px";
   document.getElementById("modalTitle").textContent = "Novo orçamento";
   document.getElementById("modalContent").innerHTML = buildQuoteForm();
   
   document.getElementById("quoteDate").value = getQuoteToday();
+  document.getElementById("quoteDiscountType").value = "R$";
   
   changeTipoEntregaQuote("entrega");
   renderQuoteItems();
@@ -708,19 +506,9 @@ function openNewQuote() {
 
 function changeQuoteClient(clientId) {
   const client = clients.find(item => String(item.id) === String(clientId));
-  const ids = [
-    "quoteCep", "quoteAddress", "quoteNumber", "quoteComplement",
-    "quoteNeighborhood", "quoteCity", "quoteState"
-  ];
+  const ids = ["quoteCep", "quoteAddress", "quoteNumber", "quoteComplement", "quoteNeighborhood", "quoteCity", "quoteState"];
 
-  if (!client) {
-    ids.forEach(id => {
-      const element = document.getElementById(id);
-      if (element) element.value = "";
-    });
-    return;
-  }
-
+  if (!client) { ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; }); return; }
   if (getTipoEntregaQuoteFromForm() === "retirada") return;
 
   document.getElementById("quoteCep").value = client.cep || "";
@@ -738,14 +526,7 @@ function changeQuoteClient(clientId) {
    ====================================================== */
 
 function addQuoteItem() {
-  currentQuoteItems.push({
-    produto_id: "",
-    variacao_id: "",
-    quantidade: 1,
-    preco_unitario: 0,
-    desconto: 0,
-    observacao: ""
-  });
+  currentQuoteItems.push({ produto_id: "", variacao_id: "", quantidade: 1, preco_unitario: 0, desconto: 0, observacao: "" });
   renderQuoteItems();
   updateQuoteSummary();
 }
@@ -761,11 +542,7 @@ function renderQuoteItems() {
   if (!container) return;
 
   if (!currentQuoteItems.length) {
-    container.innerHTML = `
-      <div style="padding:20px; text-align:center; border:1px dashed #ccc; border-radius:8px;">
-        <span class="muted">Nenhum produto adicionado ao orçamento.</span>
-      </div>
-    `;
+    container.innerHTML = `<div style="padding:20px; text-align:center; border:1px dashed #ccc; border-radius:8px;"><span class="muted">Nenhum produto adicionado ao orçamento.</span></div>`;
     return;
   }
 
@@ -776,36 +553,14 @@ function renderQuoteItems() {
     return `
       <div style="padding:15px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px;">
         <div style="display:grid; grid-template-columns:2fr 2fr 1fr 1fr auto; gap:10px; align-items:end;">
-          <div>
-            <label>Produto</label>
-            <select onchange="changeQuoteItemProduct(${index}, this.value)">
-              ${buildQuoteProductOptions(item.produto_id)}
-            </select>
-          </div>
-          <div>
-            <label>Variação</label>
-            <select onchange="changeQuoteItemVariation(${index}, this.value)" ${!productVariations.length ? "disabled" : ""}>
-              <option value="">${productVariations.length ? "Selecione" : "Sem variação"}</option>
-              ${productVariations.map(v => `<option value="${v.id}" ${String(v.id) === String(item.variacao_id) ? "selected" : ""}>${escapeHtml(v.nome)}</option>`).join("")}
-            </select>
-          </div>
-          <div>
-            <label>Quantidade</label>
-            <input type="number" min="0.001" step="0.001" value="${item.quantidade}" onchange="changeQuoteItemQuantity(${index}, this.value)">
-          </div>
-          <div>
-            <label>Preço unitário</label>
-            <input type="number" min="0" step="0.01" value="${item.preco_unitario}" onchange="changeQuoteItemPrice(${index}, this.value)">
-          </div>
+          <div><label>Produto</label><select onchange="changeQuoteItemProduct(${index}, this.value)">${buildQuoteProductOptions(item.produto_id)}</select></div>
+          <div><label>Variação</label><select onchange="changeQuoteItemVariation(${index}, this.value)" ${!productVariations.length ? "disabled" : ""}><option value="">${productVariations.length ? "Selecione" : "Sem variação"}</option>${productVariations.map(v => `<option value="${v.id}" ${String(v.id) === String(item.variacao_id) ? "selected" : ""}>${escapeHtml(v.nome)}</option>`).join("")}</select></div>
+          <div><label>Quantidade</label><input type="number" min="0.001" step="0.001" value="${item.quantidade}" onchange="changeQuoteItemQuantity(${index}, this.value)"></div>
+          <div><label>Preço unitário</label><input type="number" min="0" step="0.01" value="${item.preco_unitario}" onchange="changeQuoteItemPrice(${index}, this.value)"></div>
           <button type="button" class="btn btn-danger" onclick="removeQuoteItem(${index})">×</button>
         </div>
-        <div style="margin-top:10px;">
-          <label>Observação do item</label>
-          <input type="text" value="${escapeHtml(item.observacao || "")}" onchange="changeQuoteItemObservation(${index}, this.value)" placeholder="Observação...">
-        </div>
-        <div style="text-align:right; margin-top:10px;">
-          <strong>Subtotal: ${quoteMoney(itemSubtotal)}</strong>
-        </div>
+        <div style="margin-top:10px;"><label>Observação do item</label><input type="text" value="${escapeHtml(item.observacao || "")}" onchange="changeQuoteItemObservation(${index}, this.value)" placeholder="Observação..."></div>
+        <div style="text-align:right; margin-top:10px;"><strong>Subtotal: ${quoteMoney(itemSubtotal)}</strong></div>
       </div>
     `;
   }).join("");
@@ -826,7 +581,6 @@ function changeQuoteItemVariation(index, variationId) {
   const item = currentQuoteItems[index];
   if (!item) return;
   item.variacao_id = variationId;
-
   if (variationId) {
     const v = variations.find(v => String(v.id) === String(variationId));
     if (v) item.preco_unitario = Number(v.preco_venda) || 0;
@@ -859,7 +613,7 @@ function changeQuoteItemObservation(index, value) {
 
 
 /* ======================================================
-   RESUMO
+   RESUMO E CÁLCULO INTELIGENTE DE DESCONTO
    ====================================================== */
 
 function updateQuoteSummary() {
@@ -869,19 +623,30 @@ function updateQuoteSummary() {
     subtotal += (Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0) - (Number(item.desconto) || 0);
   });
 
-  const discount = getQuoteNumberValue("quoteDiscount");
   const increase = getQuoteNumberValue("quoteIncrease");
   const labor    = getQuoteNumberValue("quoteLabor");
   const freight  = getQuoteNumberValue("quoteFreight");
+  
+  const discountInput = getQuoteNumberValue("quoteDiscount");
+  const discountType = document.getElementById("quoteDiscountType")?.value || "R$";
+  
+  let discountReal = 0;
+  
+  if (discountType === "%") {
+    const baseCalculo = subtotal + labor + freight + increase;
+    discountReal = (baseCalculo * discountInput) / 100;
+  } else {
+    discountReal = discountInput;
+  }
 
-  const total = subtotal + labor + freight + increase - discount;
+  const total = subtotal + labor + freight + increase - discountReal;
 
   const values = {
     quoteSummarySubtotal: subtotal,
     quoteSummaryLabor: labor,
     quoteSummaryFreight: freight,
     quoteSummaryIncrease: increase,
-    quoteSummaryDiscount: discount,
+    quoteSummaryDiscount: discountReal,
     quoteSummaryTotal: Math.max(total, 0)
   };
 
@@ -892,9 +657,7 @@ function updateQuoteSummary() {
 }
 
 function getQuoteDeliveryAddress() {
-  const tipo = getTipoEntregaQuoteFromForm();
-  if (tipo === "retirada") return "Retirada na loja";
-
+  if (getTipoEntregaQuoteFromForm() === "retirada") return "Retirada na loja";
   const cep = document.getElementById("quoteCep")?.value.trim() || "";
   const address = document.getElementById("quoteAddress")?.value.trim() || "";
   const number = document.getElementById("quoteNumber")?.value.trim() || "";
@@ -909,7 +672,6 @@ function getQuoteDeliveryAddress() {
   if (complement) lines.push(`Complemento: ${complement}`);
   if (neighborhood) lines.push(`Bairro: ${neighborhood}`);
   if (city || state) lines.push(`Cidade: ${city}${state ? " - " + state : ""}`);
-  
   return lines.join("\n");
 }
 
@@ -920,7 +682,6 @@ function getQuoteDeliveryAddress() {
 
 async function saveQuote() {
   if (!currentQuoteItems.length) { alert("Adicione pelo menos um produto ao orçamento."); return; }
-  
   const clientId = document.getElementById("quoteClient").value;
   if (!clientId) { alert("Selecione um cliente."); return; }
 
@@ -929,44 +690,48 @@ async function saveQuote() {
     if (!item.quantidade || Number(item.quantidade) <= 0) { alert("Informe uma quantidade válida para todos os produtos."); return; }
   }
 
-  // NOVO: Calcula a data de previsão antes de salvar
   const dataPrevisao = calcularDataPrevisaoQuote();
 
+  // 1. Calcula o subtotal dos itens
   const subtotal = currentQuoteItems.reduce((total, item) => {
-    const quantidade = Number(item.quantidade) || 0;
-    const precoUnitario = Number(item.preco_unitario) || 0;
-    const descontoItem = Number(item.desconto) || 0;
-    return total + (quantidade * precoUnitario - descontoItem);
+    return total + ((Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0) - (Number(item.desconto) || 0));
   }, 0);
 
-  const desconto  = getQuoteNumberValue("quoteDiscount");
   const acrescimo = getQuoteNumberValue("quoteIncrease");
   const maoDeObra = getQuoteNumberValue("quoteLabor");
-  const frete     = getQuoteNumberValue("quoteFreight");
+  const frete = getQuoteNumberValue("quoteFreight");
+  
+  // 2. Recupera os valores do desconto digitados pelo usuário
+  const discountInput = getQuoteNumberValue("quoteDiscount");
+  const discountType = document.getElementById("quoteDiscountType")?.value || "R$";
+  
+  // 3. Refaz o cálculo do desconto em reais na hora de salvar (Garante que o valor será numérico)
+  let discountReal = 0;
+  if (discountType === "%") {
+    const baseCalculo = subtotal + maoDeObra + frete + acrescimo;
+    discountReal = (baseCalculo * discountInput) / 100;
+  } else {
+    discountReal = discountInput;
+  }
 
-  const valorTotal = Math.max(subtotal - desconto + acrescimo + frete + maoDeObra, 0);
+  // 4. Calcula o valor total final
+  const valorTotal = Math.max((subtotal + maoDeObra + frete + acrescimo) - discountReal, 0);
 
-  const subtotalFinal    = Number(subtotal.toFixed(2));
-  const descontoFinal    = Number(desconto.toFixed(2));
-  const acrescimoFinal   = Number(acrescimo.toFixed(2));
-  const freteFinal       = Number(frete.toFixed(2));
-  const maoDeObraFinal   = Number(maoDeObra.toFixed(2));
-  const valorTotalFinal  = Number(valorTotal.toFixed(2));
-
+  // 5. Monta o objeto com os valores garantidos como números (parseFloat/Number)
   const quoteData = {
     id_loja: currentStore.id_loja,
     cliente_id: Number(clientId),
     data_pedido: document.getElementById("quoteDate").value,
     status: "Orçamento",
     tipo_entrega: getTipoEntregaQuoteFromForm(),
-    subtotal: subtotalFinal,
-    desconto: descontoFinal,
-    acrescimo: acrescimoFinal,
-    frete: freteFinal,
-    mao_de_obra: maoDeObraFinal,
-    valor_total: valorTotalFinal,
+    subtotal: Number(subtotal.toFixed(2)),
+    desconto: Number(discountReal.toFixed(2)), // <-- Salva o valor em Reais corretamente
+    acrescimo: Number(acrescimo.toFixed(2)),
+    frete: Number(frete.toFixed(2)),
+    mao_de_obra: Number(maoDeObra.toFixed(2)),
+    valor_total: Number(valorTotal.toFixed(2)),
     prazo_entrega: document.getElementById("quoteDeliveryDeadline").value.trim(),
-    data_previsao_entrega: dataPrevisao, // <-- SALVA A DATA AQUI
+    data_previsao_entrega: dataPrevisao,
     forma_pagamento: document.getElementById("quotePayment").value.trim(),
     endereco_entrega: getQuoteDeliveryAddress(),
     observacoes: document.getElementById("quoteNotes").value.trim()
@@ -974,21 +739,10 @@ async function saveQuote() {
 
   /* ---------- EDIÇÃO ---------- */
   if (editingQuoteId) {
-    const { data: updatedQuote, error: quoteError } = await db
-      .from("gestao_loja_pedidos")
-      .update(quoteData)
-      .eq("id", editingQuoteId)
-      .eq("id_loja", currentStore.id_loja)
-      .select()
-      .single();
-
+    const { data: updatedQuote, error: quoteError } = await db.from("gestao_loja_pedidos").update(quoteData).eq("id", editingQuoteId).eq("id_loja", currentStore.id_loja).select().single();
     if (quoteError) { alert("Erro ao atualizar orçamento:\n" + quoteError.message); return; }
 
-    const { error: deleteItemsError } = await db
-      .from("gestao_loja_pedidos_itens")
-      .delete()
-      .eq("pedido_id", editingQuoteId);
-
+    const { error: deleteItemsError } = await db.from("gestao_loja_pedidos_itens").delete().eq("pedido_id", editingQuoteId);
     if (deleteItemsError) { alert("Erro ao atualizar os itens:\n" + deleteItemsError.message); return; }
 
     const itemsData = currentQuoteItems.map(item => {
@@ -998,15 +752,9 @@ async function saveQuote() {
       const subtotalItem = quantidade * precoUnitario - descontoItem;
 
       return {
-        id_loja: currentStore.id_loja,
-        pedido_id: updatedQuote.id,
-        produto_id: Number(item.produto_id),
-        variacao_id: item.variacao_id ? Number(item.variacao_id) : null,
-        quantidade: quantidade,
-        preco_unitario: precoUnitario,
-        desconto: descontoItem,
-        subtotal: Number(subtotalItem.toFixed(2)),
-        observacao: item.observacao || null
+        id_loja: currentStore.id_loja, pedido_id: updatedQuote.id, produto_id: Number(item.produto_id),
+        variacao_id: item.variacao_id ? Number(item.variacao_id) : null, quantidade: quantidade,
+        preco_unitario: precoUnitario, desconto: descontoItem, subtotal: Number(subtotalItem.toFixed(2)), observacao: item.observacao || null
       };
     });
 
@@ -1017,7 +765,7 @@ async function saveQuote() {
     currentQuoteItems = [];
     closeModal();
     await loadQuotes();
-    alert("Orçamento atualizado com sucesso.\n\nTotal: " + quoteMoney(valorTotalFinal));
+    alert("Orçamento atualizado com sucesso.\n\nTotal: " + quoteMoney(valorTotal));
     return;
   }
 
@@ -1027,12 +775,7 @@ async function saveQuote() {
     const numeroOrcamento = await proximaSequenciaOrcamento();
     quoteData.numero = numeroOrcamento;
 
-    const { data: quote, error } = await db
-      .from("gestao_loja_pedidos")
-      .insert(quoteData)
-      .select()
-      .single();
-
+    const { data: quote, error } = await db.from("gestao_loja_pedidos").insert(quoteData).select().single();
     if (error) { alert("Erro ao salvar orçamento:\n" + error.message); return; }
 
     const itemsData = currentQuoteItems.map(item => {
@@ -1042,15 +785,9 @@ async function saveQuote() {
       const subtotalItem = quantidade * precoUnitario - descontoItem;
 
       return {
-        id_loja: currentStore.id_loja,
-        pedido_id: quote.id,
-        produto_id: Number(item.produto_id),
-        variacao_id: item.variacao_id ? Number(item.variacao_id) : null,
-        quantidade: quantidade,
-        preco_unitario: precoUnitario,
-        desconto: descontoItem,
-        subtotal: Number(subtotalItem.toFixed(2)),
-        observacao: item.observacao || null
+        id_loja: currentStore.id_loja, pedido_id: quote.id, produto_id: Number(item.produto_id),
+        variacao_id: item.variacao_id ? Number(item.variacao_id) : null, quantidade: quantidade,
+        preco_unitario: precoUnitario, desconto: descontoItem, subtotal: Number(subtotalItem.toFixed(2)), observacao: item.observacao || null
       };
     });
 
@@ -1063,7 +800,7 @@ async function saveQuote() {
 
     closeModal();
     await loadQuotes();
-    alert("Orçamento salvo com sucesso.\n\nNúmero: #" + numeroOrcamento + "\nTotal: " + quoteMoney(valorTotalFinal));
+    alert("Orçamento salvo com sucesso.\n\nNúmero: #" + numeroOrcamento + "\nTotal: " + quoteMoney(valorTotal));
 
   } catch (error) {
     alert("Erro ao salvar orçamento:\n" + (error.message || "Erro desconhecido."));
@@ -1076,24 +813,13 @@ async function saveQuote() {
    ====================================================== */
 
 async function viewQuote(quoteId) {
-  const { data: quote, error: quoteError } = await db
-    .from("gestao_loja_pedidos")
-    .select(`
-      *,
-      gestao_loja_clientes (id, nome, telefone, whatsapp, email, cpf_cnpj, tipo_cliente, inscricao_estadual, indicador_ie, inscricao_municipal)
-    `)
-    .eq("id", quoteId)
-    .eq("id_loja", currentStore.id_loja)
-    .single();
+  const { data: quote, error: quoteError } = await db.from("gestao_loja_pedidos").select(`
+      *, gestao_loja_clientes (id, nome, telefone, whatsapp, email, cpf_cnpj, tipo_cliente, inscricao_estadual, indicador_ie, inscricao_municipal)
+    `).eq("id", quoteId).eq("id_loja", currentStore.id_loja).single();
 
   if (quoteError) { alert("Erro ao carregar orçamento:\n" + quoteError.message); return; }
 
-  const { data: items, error: itemsError } = await db
-    .from("gestao_loja_pedidos_itens")
-    .select(`*, gestao_loja_produtos (id, nome, sku), gestao_loja_produtos_variacoes (id, nome, sku)`)
-    .eq("pedido_id", quoteId)
-    .order("id");
-
+  const { data: items, error: itemsError } = await db.from("gestao_loja_pedidos_itens").select(`*, gestao_loja_produtos (id, nome, sku), gestao_loja_produtos_variacoes (id, nome, sku)`).eq("pedido_id", quoteId).order("id");
   if (itemsError) { alert("Erro ao carregar itens:\n" + itemsError.message); return; }
 
   const client = quote.gestao_loja_clientes;
@@ -1124,7 +850,6 @@ async function viewQuote(quoteId) {
         <h3>Dados do orçamento</h3>
         <p><strong>Número:</strong> #${quote.numero}</p>
         <p><strong>Data:</strong> ${formatQuoteDate(quote.data_pedido)}</p>
-        <!-- NOVO: Exibe a data prevista -->
         <p><strong>Previsão de Entrega:</strong> <span style="color:#0284c7; font-weight:bold;">${quote.data_previsao_entrega ? formatQuoteDate(quote.data_previsao_entrega) : "-"}</span></p>
         <p><strong>Status:</strong> <span class="status ${quoteStatusClass(status)}">${escapeHtml(status)}</span></p>
         <p><strong>Forma de pagamento:</strong> ${escapeHtml(quote.forma_pagamento || "-")}</p>
@@ -1188,7 +913,7 @@ async function viewQuote(quoteId) {
       <div class="order-summary-row"><span>Mão de obra</span><strong>${quoteMoney(quote.mao_de_obra)}</strong></div>
       <div class="order-summary-row"><span>Frete</span><strong>${quoteMoney(quote.frete)}</strong></div>
       <div class="order-summary-row"><span>Acréscimo</span><strong>${quoteMoney(quote.acrescimo)}</strong></div>
-      <div class="order-summary-row"><span>Desconto</span><strong>${quoteMoney(quote.desconto)}</strong></div>
+      <div class="order-summary-row" style="color:#dc2626;"><span>Desconto</span><strong>${quoteMoney(quote.desconto)}</strong></div>
       <hr>
       <div class="order-summary-row" style="font-size:20px;"><strong>Total</strong><strong>${quoteMoney(quote.valor_total)}</strong></div>
     </div>
@@ -1225,33 +950,18 @@ async function viewQuote(quoteId) {
    ====================================================== */
 
 async function editQuote(quoteId) {
-  const { data: quote, error: quoteError } = await db
-    .from("gestao_loja_pedidos")
-    .select("*")
-    .eq("id", quoteId)
-    .eq("id_loja", currentStore.id_loja)
-    .single();
-
+  const { data: quote, error: quoteError } = await db.from("gestao_loja_pedidos").select("*").eq("id", quoteId).eq("id_loja", currentStore.id_loja).single();
   if (quoteError) { alert("Erro ao carregar orçamento:\n" + quoteError.message); return; }
   if (!isQuoteStatus(quote.status)) { alert("Somente orçamentos podem ser editados."); return; }
 
-  const { data: items, error: itemsError } = await db
-    .from("gestao_loja_pedidos_itens")
-    .select("*")
-    .eq("pedido_id", quoteId)
-    .order("id");
-
+  const { data: items, error: itemsError } = await db.from("gestao_loja_pedidos_itens").select("*").eq("pedido_id", quoteId).order("id");
   if (itemsError) { alert("Erro ao carregar itens:\n" + itemsError.message); return; }
 
   editingQuoteId = quoteId;
 
   currentQuoteItems = (items || []).map(item => ({
-    produto_id: item.produto_id,
-    variacao_id: item.variacao_id || "",
-    quantidade: Number(item.quantidade),
-    preco_unitario: Number(item.preco_unitario),
-    desconto: Number(item.desconto || 0),
-    observacao: item.observacao || ""
+    produto_id: item.produto_id, variacao_id: item.variacao_id || "", quantidade: Number(item.quantidade),
+    preco_unitario: Number(item.preco_unitario), desconto: Number(item.desconto || 0), observacao: item.observacao || ""
   }));
 
   document.getElementById("modal").classList.remove("hidden");
@@ -1263,13 +973,16 @@ async function editQuote(quoteId) {
   document.getElementById("quoteDate").value = quote.data_pedido || "";
   document.getElementById("quoteDeliveryDeadline").value = quote.prazo_entrega || "";
   document.getElementById("quotePayment").value = quote.forma_pagamento || "";
+  
+  // Ao editar, assume que o desconto salvo está em Reais (padrão do banco)
+  document.getElementById("quoteDiscountType").value = "R$";
   document.getElementById("quoteDiscount").value = Number(quote.desconto || 0);
+  
   document.getElementById("quoteIncrease").value = Number(quote.acrescimo || 0);
   document.getElementById("quoteLabor").value = Number(quote.mao_de_obra || 0);
   document.getElementById("quoteFreight").value = Number(quote.frete || 0);
   document.getElementById("quoteNotes").value = quote.observacoes || "";
 
-  // NOVO: Recalcula a data ao abrir a edição
   calcularDataPrevisaoQuote();
 
   const tipoEntrega = quote.tipo_entrega || (isRetiradaQuote(quote) ? "retirada" : "entrega");
@@ -1288,31 +1001,21 @@ async function editQuote(quoteId) {
    ====================================================== */
 
 async function approveQuote(quoteId) {
-  const { data: quote, error } = await db
-    .from("gestao_loja_pedidos")
-    .select("*")
-    .eq("id", quoteId)
-    .eq("id_loja", currentStore.id_loja)
-    .single();
-
+  const { data: quote, error } = await db.from("gestao_loja_pedidos").select("*").eq("id", quoteId).eq("id_loja", currentStore.id_loja).single();
   if (error) { alert("Erro ao carregar orçamento:\n" + error.message); return; }
   if (!isQuoteStatus(quote.status)) { alert("Este orçamento não está mais disponível para aprovação."); return; }
 
   const confirmed = confirm(`Deseja aprovar o orçamento #${quote.numero}?\n\nValor: ${quoteMoney(quote.valor_total)}\n\nEle será enviado para a loja como PENDENTE.`);
   if (!confirmed) return;
 
-  const { error: updateError } = await db
-    .from("gestao_loja_pedidos")
-    .update({
+  const { error: updateError } = await db.from("gestao_loja_pedidos").update({
       status: "Pendente",
       aprovado_em: new Date().toISOString(),
       aprovado_por: getCurrentUserId(),
       recusado_em: null,
       recusado_por: null,
       motivo_recusa: null
-    })
-    .eq("id", quoteId)
-    .eq("id_loja", currentStore.id_loja);
+    }).eq("id", quoteId).eq("id_loja", currentStore.id_loja);
 
   if (updateError) { alert("Erro ao aprovar orçamento:\n" + updateError.message); return; }
 
@@ -1322,23 +1025,12 @@ async function approveQuote(quoteId) {
 }
 
 async function cancelQuote(quoteId) {
-  const { data: quote } = await db
-    .from("gestao_loja_pedidos")
-    .select("numero")
-    .eq("id", quoteId)
-    .eq("id_loja", currentStore.id_loja)
-    .single();
-
+  const { data: quote } = await db.from("gestao_loja_pedidos").select("numero").eq("id", quoteId).eq("id_loja", currentStore.id_loja).single();
   const numeroLabel = quote?.numero ? `#${quote.numero}` : "";
   const confirmed = confirm(`Deseja cancelar ${numeroLabel ? "o orçamento " + numeroLabel : "este orçamento"}?`);
   if (!confirmed) return;
 
-  const { error } = await db
-    .from("gestao_loja_pedidos")
-    .update({ status: "Cancelado" })
-    .eq("id", quoteId)
-    .eq("id_loja", currentStore.id_loja);
-
+  const { error } = await db.from("gestao_loja_pedidos").update({ status: "Cancelado" }).eq("id", quoteId).eq("id_loja", currentStore.id_loja);
   if (error) { alert("Erro ao cancelar orçamento:\n" + error.message); return; }
 
   closeModal();
@@ -1352,31 +1044,21 @@ async function cancelQuote(quoteId) {
    ====================================================== */
 
 async function approveOrder(orderId) {
-  const { data: order, error } = await db
-    .from("gestao_loja_pedidos")
-    .select("id, numero, status, valor_total")
-    .eq("id", orderId)
-    .eq("id_loja", currentStore.id_loja)
-    .single();
-
+  const { data: order, error } = await db.from("gestao_loja_pedidos").select("id, numero, status, valor_total").eq("id", orderId).eq("id_loja", currentStore.id_loja).single();
   if (error) { alert("Erro ao carregar pedido:\n" + error.message); return; }
   if (!isNewStatus(order.status)) { alert("Somente pedidos com status Novo podem ser aprovados."); return; }
 
   const confirmed = confirm(`Aprovar o pedido #${order.numero}?\n\nValor: ${quoteMoney(order.valor_total)}\n\nAo aprovar, o pedido passará para PENDENTE.`);
   if (!confirmed) return;
 
-  const { error: updateError } = await db
-    .from("gestao_loja_pedidos")
-    .update({
+  const { error: updateError } = await db.from("gestao_loja_pedidos").update({
       status: "Pendente",
       aprovado_em: new Date().toISOString(),
       aprovado_por: getCurrentUserId(),
       recusado_em: null,
       recusado_por: null,
       motivo_recusa: null
-    })
-    .eq("id", orderId)
-    .eq("id_loja", currentStore.id_loja);
+    }).eq("id", orderId).eq("id_loja", currentStore.id_loja);
 
   if (updateError) { alert("Erro ao aprovar pedido:\n" + updateError.message); return; }
 
@@ -1386,16 +1068,9 @@ async function approveOrder(orderId) {
 }
 
 async function rejectOrder(orderId) {
-  const { data: order, error } = await db
-    .from("gestao_loja_pedidos")
-    .select("id, numero, status, valor_total")
-    .eq("id", orderId)
-    .eq("id_loja", currentStore.id_loja)
-    .single();
-
+  const { data: order, error } = await db.from("gestao_loja_pedidos").select("id, numero, status, valor_total").eq("id", orderId).eq("id_loja", currentStore.id_loja).single();
   if (error) { alert("Erro ao carregar pedido:\n" + error.message); return; }
   if (!isNewStatus(order.status)) { alert("Somente pedidos com status Novo podem ser recusados."); return; }
-
   openRejectOrderModal(order);
 }
 
@@ -1425,18 +1100,14 @@ async function confirmRejectOrder(orderId) {
   if (!reason) { alert("Informe o motivo da recusa."); return; }
   if (reason.length < 5) { alert("O motivo da recusa precisa ter pelo menos 5 caracteres."); return; }
 
-  const { error } = await db
-    .from("gestao_loja_pedidos")
-    .update({
+  const { error } = await db.from("gestao_loja_pedidos").update({
       status: "Recusado",
       motivo_recusa: reason,
       recusado_em: new Date().toISOString(),
       recusado_por: getCurrentUserId(),
       aprovado_em: null,
       aprovado_por: null
-    })
-    .eq("id", orderId)
-    .eq("id_loja", currentStore.id_loja);
+    }).eq("id", orderId).eq("id_loja", currentStore.id_loja);
 
   if (error) { alert("Erro ao recusar pedido:\n" + error.message); return; }
 
@@ -1451,24 +1122,13 @@ async function confirmRejectOrder(orderId) {
    ====================================================== */
 
 async function generateQuotePDF(quoteId) {
-  const { data: quote, error: quoteError } = await db
-    .from("gestao_loja_pedidos")
-    .select(`
-      *,
-      gestao_loja_clientes (id, nome, telefone, whatsapp, email, cpf_cnpj, tipo_cliente, inscricao_estadual, indicador_ie, inscricao_municipal)
-    `)
-    .eq("id", quoteId)
-    .eq("id_loja", currentStore.id_loja)
-    .single();
+  const { data: quote, error: quoteError } = await db.from("gestao_loja_pedidos").select(`
+      *, gestao_loja_clientes (id, nome, telefone, whatsapp, email, cpf_cnpj, tipo_cliente, inscricao_estadual, indicador_ie, inscricao_municipal)
+    `).eq("id", quoteId).eq("id_loja", currentStore.id_loja).single();
 
   if (quoteError) { alert("Erro ao gerar PDF:\n" + quoteError.message); return; }
 
-  const { data: items, error: itemsError } = await db
-    .from("gestao_loja_pedidos_itens")
-    .select(`*, gestao_loja_produtos (id, nome, sku), gestao_loja_produtos_variacoes (id, nome, sku)`)
-    .eq("pedido_id", quoteId)
-    .order("id");
-
+  const { data: items, error: itemsError } = await db.from("gestao_loja_pedidos_itens").select(`*, gestao_loja_produtos (id, nome, sku), gestao_loja_produtos_variacoes (id, nome, sku)`).eq("pedido_id", quoteId).order("id");
   if (itemsError) { alert("Erro ao carregar itens para o PDF:\n" + itemsError.message); return; }
 
   const client = quote.gestao_loja_clientes;
@@ -1477,7 +1137,6 @@ async function generateQuotePDF(quoteId) {
   const storeName = escapeHtml(currentStore?.nome_fantasia || currentStore?.nome || "Gestão Loja");
   const storeDocument = escapeHtml(currentStore?.cnpj || "");
   
-  // Limpeza para evitar espaçamentos no PDF
   const address = escapeHtml(String(quote.endereco_entrega || "-").trim()).replace(/\n/g, "<br>");
   const obs = quote.observacoes ? escapeHtml(String(quote.observacoes).trim()).replace(/\n/g, "<br>") : "";
 
@@ -1513,7 +1172,6 @@ async function generateQuotePDF(quoteId) {
         .section { margin-top: 20px; page-break-inside: avoid; }
         .section-title { font-weight: bold; font-size: 15px; border-bottom: 1px solid #ccc; padding-bottom: 6px; margin-bottom: 10px; }
         
-        /* Correção de espaçamento no PDF */
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; align-items: start; }
         .info-grid > div { text-align: left; page-break-inside: avoid; margin: 0; padding: 0; line-height: 1.4; }
         .info-label { font-weight: bold; }
@@ -1551,15 +1209,11 @@ async function generateQuotePDF(quoteId) {
         <div class="info-grid">
           <div><span class="info-label">Cliente:</span> ${escapeHtml(client?.nome || "-")}</div>
           <div><span class="info-label">Data:</span> ${formatQuoteDate(quote.data_pedido)}</div>
-          
-          <!-- NOVO: Previsão de entrega no PDF -->
           <div><span class="info-label">Previsão de Entrega:</span> <strong>${quote.data_previsao_entrega ? formatQuoteDate(quote.data_previsao_entrega) : "-"}</strong></div>
-          
           <div><span class="info-label">Status:</span> ${escapeHtml(quote.status || "Orçamento")}</div>
           <div><span class="info-label">Telefone:</span> ${escapeHtml(client?.telefone || client?.whatsapp || "-")}</div>
           <div><span class="info-label">Forma de pagamento:</span> ${escapeHtml(quote.forma_pagamento || "-")}</div>
           <div><span class="info-label">Prazo:</span> ${escapeHtml(quote.prazo_entrega || "-")}</div>
-          
           ${isPJ ? `
             <div><span class="info-label">CNPJ:</span> ${escapeHtml(client?.cpf_cnpj || "-")}</div>
             <div><span class="info-label">Inscrição Estadual:</span> ${escapeHtml(client?.inscricao_estadual || "-")}</div>
@@ -1597,9 +1251,7 @@ async function generateQuotePDF(quoteId) {
       <div class="section">
         <div class="section-title">Produtos</div>
         <table>
-          <thead>
-            <tr><th>Produto</th><th>Qtd.</th><th>Valor unit.</th><th>Subtotal</th></tr>
-          </thead>
+          <thead><tr><th>Produto</th><th>Qtd.</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
           <tbody>${itemsHtml}</tbody>
         </table>
       </div>
@@ -1609,7 +1261,7 @@ async function generateQuotePDF(quoteId) {
         <div class="total-row"><span>Mão de obra</span><strong>${quoteMoney(quote.mao_de_obra)}</strong></div>
         <div class="total-row"><span>Frete</span><strong>${quoteMoney(quote.frete)}</strong></div>
         <div class="total-row"><span>Acréscimo</span><strong>${quoteMoney(quote.acrescimo)}</strong></div>
-        <div class="total-row"><span>Desconto</span><strong>${quoteMoney(quote.desconto)}</strong></div>
+        <div class="total-row" style="color: #dc2626;"><span>Desconto</span><strong>${quoteMoney(quote.desconto)}</strong></div>
         <div class="total-row grand-total"><span>TOTAL</span><span>${quoteMoney(quote.valor_total)}</span></div>
       </div>
 
@@ -1643,37 +1295,20 @@ document.addEventListener("DOMContentLoaded", async function() {
     const contextLoaded = await loadUserContext();
     if (!contextLoaded) return;
 
-    if (typeof loadMenu === "function") {
-      await loadMenu();
-    }
-
-    if (typeof setActiveNav === "function") {
-      setActiveNav();
-    }
+    if (typeof loadMenu === "function") { await loadMenu(); }
+    if (typeof setActiveNav === "function") { setActiveNav(); }
 
     const subtitle = document.getElementById("pageSubtitle");
-    if (subtitle) {
-      subtitle.textContent = "Gerencie os orçamentos dos clientes";
-    }
+    if (subtitle) subtitle.textContent = "Gerencie os orçamentos dos clientes";
 
-    await Promise.all([
-      loadQuoteClients(),
-      loadQuoteProducts(),
-      loadQuoteVariations()
-    ]);
-
+    await Promise.all([loadQuoteClients(), loadQuoteProducts(), loadQuoteVariations()]);
     await loadQuotes();
 
   } catch (error) {
     console.error("Erro na página de orçamentos:", error);
     const container = document.getElementById("quotesContainer");
     if (container) {
-      container.innerHTML = `
-        <div class="card">
-          <h3>Erro ao carregar a página</h3>
-          <p>${escapeHtml(error.message || "Erro desconhecido.")}</p>
-        </div>
-      `;
+      container.innerHTML = `<div class="card"><h3>Erro ao carregar a página</h3><p>${escapeHtml(error.message || "Erro desconhecido.")}</p></div>`;
     }
   }
 });

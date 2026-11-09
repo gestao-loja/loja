@@ -17,7 +17,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_0HJWnbqDMg1LFwLuhaRLDg_FvEXwxZd";
    CLIENT SUPABASE
    ========================================================= */
 const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,     // <--- ESSENCIAL: Salva a sessão no aparelho
+    autoRefreshToken: true,   // <--- ESSENCIAL: Renova o token sem deslogar
+    detectSessionInUrl: false // Evita conflitos com URLs do app
+  }
+});
 
 window.db = db;
 
