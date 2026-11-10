@@ -4,6 +4,7 @@ let variations = [];
 let orders = [];
 let currentOrderItems = [];
 let editingOrderId = null;
+let currentOrderFilter = "ativos"; // Filtro padrão ao abrir a página
 
 
 /* ======================================================
@@ -300,12 +301,62 @@ async function loadOrders() {
    LISTAGEM
    ====================================================== */
 
+/* ======================================================
+   FILTROS DA LISTAGEM
+   ====================================================== */
+
+function setOrderFilter(filter) {
+  currentOrderFilter = filter;
+  
+  // Atualiza a aparência dos botões
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.getAttribute('data-filter') === filter) {
+      btn.classList.add('active');
+    }
+  });
+
+  // Re-renderiza a lista com o novo filtro
+  renderOrders();
+}
+
+function orderMatchesFilter(order) {
+  const status = normalizeStatus(order.status);
+  
+  if (currentOrderFilter === "todos") return true;
+  
+  if (currentOrderFilter === "inativos") {
+    return status === "cancelado" || status === "recusado";
+  }
+  
+  if (currentOrderFilter === "ativos") {
+    return status !== "cancelado" && status !== "recusado";
+  }
+  
+  if (currentOrderFilter === "pendentes") {
+    return status === "pendente" || status === "novo";
+  }
+  
+  if (currentOrderFilter === "confirmados") {
+    return status === "confirmado";
+  }
+  
+  if (currentOrderFilter === "orcamentos") {
+    return status === "orçamento";
+  }
+  
+  return true;
+}
+
 function renderOrders() {
   const container = document.getElementById("ordersContainer");
   if (!container) return;
 
-  if (!orders.length) {
-    container.innerHTML = `<div class="card"><h3>Nenhum pedido cadastrado</h3><p class="muted">Clique em "+ Novo pedido" para cadastrar o primeiro pedido.</p></div>`;
+  // Aplica o filtro selecionado na tela
+  const filteredOrders = orders.filter(orderMatchesFilter);
+
+  if (!filteredOrders.length) {
+    container.innerHTML = `<div class="card"><h3>Nenhum pedido encontrado</h3><p class="muted">Não há pedidos com o filtro selecionado no momento.</p></div>`;
     return;
   }
 
@@ -327,7 +378,7 @@ function renderOrders() {
           </tr>
         </thead>
         <tbody>
-          ${orders.map(order => {
+          ${filteredOrders.map(order => {
             const client = order.gestao_loja_clientes;
             const clientName = client?.nome || "Cliente não informado";
             const isPJ = isPessoaJuridica(client);

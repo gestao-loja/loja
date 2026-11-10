@@ -113,6 +113,30 @@
       margin-top: 20px;
     }
 
+    /* ESTILO NOVO APENAS PARA OS FILTROS */
+    .filter-btn {
+      background: #fff;
+      border: 1px solid #d8dce5;
+      color: #555d6d;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      background: #f0f4f8;
+    }
+
+    .filter-btn.active {
+      background: #0284c7 !important;
+      color: white !important;
+      border-color: #0284c7 !important;
+      font-weight: 600;
+    }
+
     @media (max-width: 600px) {
       .form-grid {
         grid-template-columns: 1fr;
@@ -153,6 +177,18 @@
     📅 Ver Calendário de Entregas
   </button>
 </div>
+
+<!-- INÍCIO DA BARRA DE FILTROS ADICIONADA -->
+<div class="card" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 15px;">
+  <strong style="font-size: 13px; color: #555d6d; margin-right: 5px;">Filtrar por:</strong>
+  <button class="filter-btn active" data-filter="ativos" onclick="setOrderFilter('ativos')">Ativos (Todos)</button>
+  <button class="filter-btn" data-filter="pendentes" onclick="setOrderFilter('pendentes')">Pendentes</button>
+  <button class="filter-btn" data-filter="confirmados" onclick="setOrderFilter('confirmados')">Confirmados</button>
+  <button class="filter-btn" data-filter="orcamentos" onclick="setOrderFilter('orcamentos')">Orçamentos</button>
+  <button class="filter-btn" data-filter="inativos" onclick="setOrderFilter('inativos')">Cancelados / Recusados</button>
+  <button class="filter-btn" data-filter="todos" onclick="setOrderFilter('todos')">Todos (Histórico)</button>
+</div>
+<!-- FIM DA BARRA DE FILTROS -->
 
       <div id="ordersContainer">
         Carregando pedidos...
