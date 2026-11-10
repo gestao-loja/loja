@@ -143,6 +143,51 @@ function calcularDataPrevisaoQuote() {
 
 
 /* ======================================================
+   HELPERS DE DESCONTO POR ITEM (IGUAL AO PEDIDOS)
+   ====================================================== */
+
+function calcularDescontoItemQuote(item) {
+  const quantidade = Number(item.quantidade) || 0;
+  const preco = Number(item.preco_unitario) || 0;
+  const bruto = quantidade * preco;
+  const descontoValor = Number(item.desconto) || 0;
+  const tipo = item.desconto_tipo || "R$";
+  const modo = item.desconto_modo || "total";
+
+  if (bruto <= 0 || descontoValor <= 0) return 0;
+
+  let baseCalculo = bruto;
+  if (modo === "unidade") {
+    baseCalculo = preco;
+  }
+
+  let descontoReal = 0;
+  if (tipo === "%") {
+    descontoReal = (baseCalculo * descontoValor) / 100;
+    if (modo === "unidade") descontoReal = descontoReal * quantidade;
+  } else {
+    descontoReal = descontoValor;
+    if (modo === "unidade") descontoReal = descontoReal * quantidade;
+  }
+
+  return Math.min(descontoReal, bruto);
+}
+
+function calcularSubtotalItemQuote(item) {
+  const quantidade = Number(item.quantidade) || 0;
+  const preco = Number(item.preco_unitario) || 0;
+  const bruto = quantidade * preco;
+  return Math.max(bruto - calcularDescontoItemQuote(item), 0);
+}
+
+function calcularValorUnitarioFinalQuote(item) {
+  const quantidade = Number(item.quantidade) || 0;
+  if (quantidade <= 0) return 0;
+  return calcularSubtotalItemQuote(item) / quantidade;
+}
+
+
+/* ======================================================
    CARREGAMENTOS
    ====================================================== */
 
@@ -437,7 +482,6 @@ function buildQuoteForm() {
     </div>
 
     <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-top:20px;">
-      <!-- CALCULADORA DE DESCONTO -->
       <div>
         <label>Desconto</label>
         <div style="display:flex; gap:5px;">
@@ -526,7 +570,10 @@ function changeQuoteClient(clientId) {
    ====================================================== */
 
 function addQuoteItem() {
-  currentQuoteItems.push({ produto_id: "", variacao_id: "", quantidade: 1, preco_unitario: 0, desconto: 0, observacao: "" });
+  currentQuoteItems.push({
+    produto_id: "", variacao_id: "", quantidade: 1, preco_unitario: 0,
+    desconto: 0, desconto_tipo: "R$", desconto_modo: "total", observacao: ""
+  });
   renderQuoteItems();
   updateQuoteSummary();
 }
@@ -548,7 +595,14 @@ function renderQuoteItems() {
 
   container.innerHTML = currentQuoteItems.map((item, index) => {
     const productVariations = variations.filter(v => String(v.produto_id) === String(item.produto_id));
-    const itemSubtotal = (Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0) - (Number(item.desconto) || 0);
+    const itemSubtotalBruto = (Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0);
+    const itemSubtotal = calcularSubtotalItemQuote(item);
+    const descontoReal = calcularDescontoItemQuote(item);
+    const unitarioFinal = calcularValorUnitarioFinalQuote(item);
+    const tipoDesc = item.desconto_tipo || "R$";
+    const modoDesc = item.desconto_modo || "total";
+    const temDesconto = descontoReal > 0.005;
+    const qtd = Number(item.quantidade) || 0;
 
     return `
       <div style="padding:15px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px;">
@@ -559,8 +613,49 @@ function renderQuoteItems() {
           <div><label>Preço unitário</label><input type="number" min="0" step="0.01" value="${item.preco_unitario}" onchange="changeQuoteItemPrice(${index}, this.value)"></div>
           <button type="button" class="btn btn-danger" onclick="removeQuoteItem(${index})">×</button>
         </div>
+
+        <!-- LINHA DE DESCONTO POR ITEM -->
+        <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #e5e8ed;">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1.4fr 1.2fr; gap:10px; align-items:end;">
+
+            <div>
+              <label style="display:block; font-size:11px; font-weight:600; color:#555d6d; margin-bottom:4px;">Modo do desconto</label>
+              <select onchange="changeQuoteItemDiscountMode(${index}, this.value)" style="width:100%; padding:10px; border:1px solid #d8dce5; border-radius:7px; background:#fff;">
+                <option value="total" ${modoDesc === "total" ? "selected" : ""}>Total do item</option>
+                <option value="unidade" ${modoDesc === "unidade" ? "selected" : ""}>Por unidade</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display:block; font-size:11px; font-weight:600; color:#555d6d; margin-bottom:4px;">Desconto</label>
+              <div style="display:flex; gap:5px;">
+                <input type="number" min="0" step="0.01" value="${item.desconto || 0}" onchange="changeQuoteItemDiscountValue(${index}, this.value)" style="flex:1;">
+                <select onchange="changeQuoteItemDiscountType(${index}, this.value)" style="width:60px; border:1px solid #d8dce5; border-radius:7px; padding:0 5px; font-weight:600; background:#fff;">
+                  <option value="R$" ${tipoDesc === "R$" ? "selected" : ""}>R$</option>
+                  <option value="%" ${tipoDesc === "%" ? "selected" : ""}>%</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label style="display:block; font-size:11px; font-weight:600; color:#555d6d; margin-bottom:4px;">Valor final unitário</label>
+              <div style="padding:10px; background:${temDesconto ? "#ecfdf3" : "#f8f9fb"}; border:1px solid ${temDesconto ? "#a7f3d0" : "#e1e4ea"}; border-radius:7px; font-weight:600; color:${temDesconto ? "#067647" : "#343a46"};">
+                ${quoteMoney(unitarioFinal)} <span style="font-weight:400; font-size:11px; color:#6b7280;">/un${qtd !== 1 ? ` × ${quoteNumber(qtd)}` : ""}</span>
+              </div>
+            </div>
+
+            <div style="text-align:right;">
+              ${temDesconto ? `
+                <div style="font-size:11px; color:#6b7280;">Bruto: <s>${quoteMoney(itemSubtotalBruto)}</s></div>
+                <div style="font-size:11px; color:#067647; font-weight:600;">Desconto aplicado: ${quoteMoney(descontoReal)}${modoDesc === "unidade" && qtd > 1 ? ` <span style="font-weight:400;">(${quoteMoney(descontoReal / qtd)}/un)</span>` : ""}</div>
+              ` : `<div style="font-size:11px; color:#9ca3af;">Sem desconto</div>`}
+              <div style="font-size:14px; margin-top:4px;"><strong>Subtotal: ${quoteMoney(itemSubtotal)}</strong></div>
+            </div>
+
+          </div>
+        </div>
+
         <div style="margin-top:10px;"><label>Observação do item</label><input type="text" value="${escapeHtml(item.observacao || "")}" onchange="changeQuoteItemObservation(${index}, this.value)" placeholder="Observação..."></div>
-        <div style="text-align:right; margin-top:10px;"><strong>Subtotal: ${quoteMoney(itemSubtotal)}</strong></div>
       </div>
     `;
   }).join("");
@@ -611,16 +706,37 @@ function changeQuoteItemObservation(index, value) {
   currentQuoteItems[index].observacao = value;
 }
 
+function changeQuoteItemDiscountValue(index, value) {
+  if (!currentQuoteItems[index]) return;
+  currentQuoteItems[index].desconto = Number(value) || 0;
+  renderQuoteItems();
+  updateQuoteSummary();
+}
+
+function changeQuoteItemDiscountType(index, value) {
+  if (!currentQuoteItems[index]) return;
+  currentQuoteItems[index].desconto_tipo = value === "%" ? "%" : "R$";
+  renderQuoteItems();
+  updateQuoteSummary();
+}
+
+function changeQuoteItemDiscountMode(index, value) {
+  if (!currentQuoteItems[index]) return;
+  currentQuoteItems[index].desconto_modo = value === "unidade" ? "unidade" : "total";
+  renderQuoteItems();
+  updateQuoteSummary();
+}
+
 
 /* ======================================================
-   RESUMO E CÁLCULO INTELIGENTE DE DESCONTO
+   RESUMO E CÁLCULO
    ====================================================== */
 
 function updateQuoteSummary() {
   let subtotal = 0;
 
   currentQuoteItems.forEach(item => {
-    subtotal += (Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0) - (Number(item.desconto) || 0);
+    subtotal += calcularSubtotalItemQuote(item);
   });
 
   const increase = getQuoteNumberValue("quoteIncrease");
@@ -692,20 +808,17 @@ async function saveQuote() {
 
   const dataPrevisao = calcularDataPrevisaoQuote();
 
-  // 1. Calcula o subtotal dos itens
   const subtotal = currentQuoteItems.reduce((total, item) => {
-    return total + ((Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0) - (Number(item.desconto) || 0));
+    return total + calcularSubtotalItemQuote(item);
   }, 0);
 
   const acrescimo = getQuoteNumberValue("quoteIncrease");
   const maoDeObra = getQuoteNumberValue("quoteLabor");
   const frete = getQuoteNumberValue("quoteFreight");
   
-  // 2. Recupera os valores do desconto digitados pelo usuário
   const discountInput = getQuoteNumberValue("quoteDiscount");
   const discountType = document.getElementById("quoteDiscountType")?.value || "R$";
   
-  // 3. Refaz o cálculo do desconto em reais na hora de salvar (Garante que o valor será numérico)
   let discountReal = 0;
   if (discountType === "%") {
     const baseCalculo = subtotal + maoDeObra + frete + acrescimo;
@@ -714,10 +827,8 @@ async function saveQuote() {
     discountReal = discountInput;
   }
 
-  // 4. Calcula o valor total final
   const valorTotal = Math.max((subtotal + maoDeObra + frete + acrescimo) - discountReal, 0);
 
-  // 5. Monta o objeto com os valores garantidos como números (parseFloat/Number)
   const quoteData = {
     id_loja: currentStore.id_loja,
     cliente_id: Number(clientId),
@@ -725,7 +836,7 @@ async function saveQuote() {
     status: "Orçamento",
     tipo_entrega: getTipoEntregaQuoteFromForm(),
     subtotal: Number(subtotal.toFixed(2)),
-    desconto: Number(discountReal.toFixed(2)), // <-- Salva o valor em Reais corretamente
+    desconto: Number(discountReal.toFixed(2)),
     acrescimo: Number(acrescimo.toFixed(2)),
     frete: Number(frete.toFixed(2)),
     mao_de_obra: Number(maoDeObra.toFixed(2)),
@@ -748,13 +859,13 @@ async function saveQuote() {
     const itemsData = currentQuoteItems.map(item => {
       const quantidade = Number(item.quantidade) || 0;
       const precoUnitario = Number(item.preco_unitario) || 0;
-      const descontoItem = Number(item.desconto) || 0;
-      const subtotalItem = quantidade * precoUnitario - descontoItem;
+      const descontoReal = calcularDescontoItemQuote(item);
+      const subtotalItem = calcularSubtotalItemQuote(item);
 
       return {
         id_loja: currentStore.id_loja, pedido_id: updatedQuote.id, produto_id: Number(item.produto_id),
         variacao_id: item.variacao_id ? Number(item.variacao_id) : null, quantidade: quantidade,
-        preco_unitario: precoUnitario, desconto: descontoItem, subtotal: Number(subtotalItem.toFixed(2)), observacao: item.observacao || null
+        preco_unitario: precoUnitario, desconto: Number(descontoReal.toFixed(2)), subtotal: Number(subtotalItem.toFixed(2)), observacao: item.observacao || null
       };
     });
 
@@ -781,13 +892,13 @@ async function saveQuote() {
     const itemsData = currentQuoteItems.map(item => {
       const quantidade = Number(item.quantidade) || 0;
       const precoUnitario = Number(item.preco_unitario) || 0;
-      const descontoItem = Number(item.desconto) || 0;
-      const subtotalItem = quantidade * precoUnitario - descontoItem;
+      const descontoReal = calcularDescontoItemQuote(item);
+      const subtotalItem = calcularSubtotalItemQuote(item);
 
       return {
         id_loja: currentStore.id_loja, pedido_id: quote.id, produto_id: Number(item.produto_id),
         variacao_id: item.variacao_id ? Number(item.variacao_id) : null, quantidade: quantidade,
-        preco_unitario: precoUnitario, desconto: descontoItem, subtotal: Number(subtotalItem.toFixed(2)), observacao: item.observacao || null
+        preco_unitario: precoUnitario, desconto: Number(descontoReal.toFixed(2)), subtotal: Number(subtotalItem.toFixed(2)), observacao: item.observacao || null
       };
     });
 
@@ -833,11 +944,13 @@ async function viewQuote(quoteId) {
   const itemsHtml = (items || []).map(item => {
     const product = item.gestao_loja_produtos;
     const variation = item.gestao_loja_produtos_variacoes;
+    const descontoItem = Number(item.desconto || 0);
     return `
       <tr>
         <td>${escapeHtml(product?.nome || "-")}${variation?.nome ? `<br><small class="muted">${escapeHtml(variation.nome)}</small>` : ""}</td>
         <td>${quoteNumber(item.quantidade)}</td>
         <td>${quoteMoney(item.preco_unitario)}</td>
+        <td>${descontoItem > 0.005 ? `<span style="color:#dc2626;">- ${quoteMoney(descontoItem)}</span>` : `<span class="muted">—</span>`}</td>
         <td>${quoteMoney(item.subtotal)}</td>
         <td>${escapeHtml(item.observacao || "")}</td>
       </tr>
@@ -902,7 +1015,7 @@ async function viewQuote(quoteId) {
       <h3>Produtos</h3>
       <table class="table" style="margin-top:15px;">
         <thead>
-          <tr><th>Produto</th><th>Quantidade</th><th>Preço unitário</th><th>Subtotal</th><th>Observação</th></tr>
+          <tr><th>Produto</th><th>Quantidade</th><th>Preço unitário</th><th>Desconto item</th><th>Subtotal</th><th>Observação</th></tr>
         </thead>
         <tbody>${itemsHtml}</tbody>
       </table>
@@ -960,8 +1073,14 @@ async function editQuote(quoteId) {
   editingQuoteId = quoteId;
 
   currentQuoteItems = (items || []).map(item => ({
-    produto_id: item.produto_id, variacao_id: item.variacao_id || "", quantidade: Number(item.quantidade),
-    preco_unitario: Number(item.preco_unitario), desconto: Number(item.desconto || 0), observacao: item.observacao || ""
+    produto_id: item.produto_id,
+    variacao_id: item.variacao_id || "",
+    quantidade: Number(item.quantidade),
+    preco_unitario: Number(item.preco_unitario),
+    desconto: Number(item.desconto || 0),
+    desconto_tipo: "R$",
+    desconto_modo: "total",
+    observacao: item.observacao || ""
   }));
 
   document.getElementById("modal").classList.remove("hidden");
@@ -974,7 +1093,6 @@ async function editQuote(quoteId) {
   document.getElementById("quoteDeliveryDeadline").value = quote.prazo_entrega || "";
   document.getElementById("quotePayment").value = quote.forma_pagamento || "";
   
-  // Ao editar, assume que o desconto salvo está em Reais (padrão do banco)
   document.getElementById("quoteDiscountType").value = "R$";
   document.getElementById("quoteDiscount").value = Number(quote.desconto || 0);
   
@@ -1143,11 +1261,13 @@ async function generateQuotePDF(quoteId) {
   const itemsHtml = (items || []).map(item => {
     const product = item.gestao_loja_produtos;
     const variation = item.gestao_loja_produtos_variacoes;
+    const descontoItem = Number(item.desconto || 0);
     return `
       <tr>
         <td>${escapeHtml(product?.nome || "-")}${variation?.nome ? `<br><small>${escapeHtml(variation.nome)}</small>` : ""}</td>
         <td>${quoteNumber(item.quantidade)}</td>
         <td>${quoteMoney(item.preco_unitario)}</td>
+        <td>${descontoItem > 0.005 ? `<span style="color:#dc2626;">- ${quoteMoney(descontoItem)}</span>` : "-"}</td>
         <td>${quoteMoney(item.subtotal)}</td>
       </tr>
     `;
@@ -1251,7 +1371,7 @@ async function generateQuotePDF(quoteId) {
       <div class="section">
         <div class="section-title">Produtos</div>
         <table>
-          <thead><tr><th>Produto</th><th>Qtd.</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
+          <thead><tr><th>Produto</th><th>Qtd.</th><th>Valor unit.</th><th>Desconto</th><th>Subtotal</th></tr></thead>
           <tbody>${itemsHtml}</tbody>
         </table>
       </div>

@@ -166,7 +166,6 @@ function getTipoEntregaFromForm() {
   return selected ? selected.value : "entrega";
 }
 
-// NOVA FUNÇÃO: Calcula a data de previsão com base no texto "X dias"
 function calcularDataPrevisao() {
   const dataPedido = document.getElementById("orderDate").value;
   const prazo = document.getElementById("orderDeliveryDeadline").value;
@@ -178,7 +177,7 @@ function calcularDataPrevisao() {
   const match = prazo.match(/\d+/);
   if (match) {
     const dias = parseInt(match[0]);
-    const data = new Date(dataPedido + 'T12:00:00'); // Usa T12 para evitar fuso horário
+    const data = new Date(dataPedido + 'T12:00:00');
     data.setDate(data.getDate() + dias);
     
     const yyyy = data.getFullYear();
@@ -191,6 +190,62 @@ function calcularDataPrevisao() {
   }
   display.textContent = '';
   return null;
+}
+
+/* ======================================================
+   HELPERS DE DESCONTO POR ITEM
+   ====================================================== */
+
+/**
+ * Calcula o desconto REAL em reais de um item, respeitando o modo:
+ * - modo "unidade": o valor informado é o desconto POR UNIDADE (× quantidade)
+ * - modo "total":   o valor informado é o desconto TOTAL do item (uma vez)
+ * - tipo "R$" ou "%" se aplica sobre a base correspondente.
+ */
+function calcularDescontoItem(item) {
+  const quantidade = Number(item.quantidade) || 0;
+  const preco = Number(item.preco_unitario) || 0;
+  const bruto = quantidade * preco;
+  const descontoValor = Number(item.desconto) || 0;
+  const tipo = item.desconto_tipo || "R$";
+  const modo = item.desconto_modo || "total";
+
+  if (bruto <= 0 || descontoValor <= 0) return 0;
+
+  let baseCalculo = bruto;
+  if (modo === "unidade") {
+    baseCalculo = preco; // base é o valor de UMA unidade
+  }
+
+  let descontoReal = 0;
+  if (tipo === "%") {
+    descontoReal = (baseCalculo * descontoValor) / 100;
+    if (modo === "unidade") descontoReal = descontoReal * quantidade;
+  } else {
+    descontoReal = descontoValor;
+    if (modo === "unidade") descontoReal = descontoReal * quantidade;
+  }
+
+  return Math.min(descontoReal, bruto);
+}
+
+/**
+ * Subtotal final do item (já com desconto aplicado).
+ */
+function calcularSubtotalItem(item) {
+  const quantidade = Number(item.quantidade) || 0;
+  const preco = Number(item.preco_unitario) || 0;
+  const bruto = quantidade * preco;
+  return Math.max(bruto - calcularDescontoItem(item), 0);
+}
+
+/**
+ * Valor unitário final (com desconto rateado por unidade).
+ */
+function calcularValorUnitarioFinal(item) {
+  const quantidade = Number(item.quantidade) || 0;
+  if (quantidade <= 0) return 0;
+  return calcularSubtotalItem(item) / quantidade;
 }
 
 
@@ -608,13 +663,23 @@ function changeOrderClient(clientId) {
    ====================================================== */
 
 function addOrderItem() {
-  currentOrderItems.push({ produto_id: "", variacao_id: "", quantidade: 1, preco_unitario: 0, desconto: 0, observacao: "" });
+  currentOrderItems.push({
+    produto_id: "", variacao_id: "", quantidade: 1, preco_unitario: 0,
+    desconto: 0, desconto_tipo: "R$", desconto_modo: "total", observacao: ""
+  });
   renderOrderItems();
   updateOrderSummary();
 }
 
 function removeOrderItem(index) {
   currentOrderItems.splice(index, 1);
+  renderOrderItems();
+  updateOrderSummary();
+}
+
+function changeItemDiscountMode(index, value) {
+  if (!currentOrderItems[index]) return;
+  currentOrderItems[index].desconto_modo = value === "unidade" ? "unidade" : "total";
   renderOrderItems();
   updateOrderSummary();
 }
@@ -628,7 +693,15 @@ function renderOrderItems() {
   }
   container.innerHTML = currentOrderItems.map((item, index) => {
     const productVariations = variations.filter(v => String(v.produto_id) === String(item.produto_id));
-    const itemSubtotal = (Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0) - (Number(item.desconto) || 0);
+    const itemSubtotalBruto = (Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0);
+    const itemSubtotal = calcularSubtotalItem(item);
+    const descontoReal = calcularDescontoItem(item);
+    const unitarioFinal = calcularValorUnitarioFinal(item);
+    const tipoDesc = item.desconto_tipo || "R$";
+    const modoDesc = item.desconto_modo || "total";
+    const temDesconto = descontoReal > 0.005;
+    const qtd = Number(item.quantidade) || 0;
+
     return `
       <div style="padding:15px;border:1px solid #ddd;border-radius:8px;margin-bottom:15px;">
         <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr auto;gap:10px;align-items:end;">
@@ -638,8 +711,49 @@ function renderOrderItems() {
           <div><label>Preço unitário</label><input type="number" min="0" step="0.01" value="${item.preco_unitario}" onchange="changeItemPrice(${index}, this.value)"></div>
           <button type="button" class="btn btn-danger" onclick="removeOrderItem(${index})">×</button>
         </div>
+
+        <!-- LINHA DE DESCONTO POR ITEM -->
+        <div style="margin-top:12px;padding-top:12px;border-top:1px dashed #e5e8ed;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1.4fr 1.2fr;gap:10px;align-items:end;">
+
+            <div>
+              <label style="display:block;font-size:11px;font-weight:600;color:#555d6d;margin-bottom:4px;">Modo do desconto</label>
+              <select onchange="changeItemDiscountMode(${index}, this.value)" style="width:100%;padding:10px;border:1px solid #d8dce5;border-radius:7px;background:#fff;">
+                <option value="total" ${modoDesc === "total" ? "selected" : ""}>Total do item</option>
+                <option value="unidade" ${modoDesc === "unidade" ? "selected" : ""}>Por unidade</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display:block;font-size:11px;font-weight:600;color:#555d6d;margin-bottom:4px;">Desconto</label>
+              <div style="display:flex;gap:5px;">
+                <input type="number" min="0" step="0.01" value="${item.desconto || 0}" onchange="changeItemDiscountValue(${index}, this.value)" style="flex:1;">
+                <select onchange="changeItemDiscountType(${index}, this.value)" style="width:60px;border:1px solid #d8dce5;border-radius:7px;padding:0 5px;font-weight:600;background:#fff;">
+                  <option value="R$" ${tipoDesc === "R$" ? "selected" : ""}>R$</option>
+                  <option value="%" ${tipoDesc === "%" ? "selected" : ""}>%</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label style="display:block;font-size:11px;font-weight:600;color:#555d6d;margin-bottom:4px;">Valor final unitário</label>
+              <div style="padding:10px;background:${temDesconto ? "#ecfdf3" : "#f8f9fb"};border:1px solid ${temDesconto ? "#a7f3d0" : "#e1e4ea"};border-radius:7px;font-weight:600;color:${temDesconto ? "#067647" : "#343a46"};">
+                ${orderMoney(unitarioFinal)} <span style="font-weight:400;font-size:11px;color:#6b7280;">/un${qtd !== 1 ? ` × ${orderNumber(qtd)}` : ""}</span>
+              </div>
+            </div>
+
+            <div style="text-align:right;">
+              ${temDesconto ? `
+                <div style="font-size:11px;color:#6b7280;">Bruto: <s>${orderMoney(itemSubtotalBruto)}</s></div>
+                <div style="font-size:11px;color:#067647;font-weight:600;">Desconto aplicado: ${orderMoney(descontoReal)}${modoDesc === "unidade" && qtd > 1 ? ` <span style="font-weight:400;">(${orderMoney(descontoReal / qtd)}/un)</span>` : ""}</div>
+              ` : `<div style="font-size:11px;color:#9ca3af;">Sem desconto</div>`}
+              <div style="font-size:14px;margin-top:4px;"><strong>Subtotal: ${orderMoney(itemSubtotal)}</strong></div>
+            </div>
+
+          </div>
+        </div>
+
         <div style="margin-top:10px;"><label>Observação do item</label><input type="text" value="${escapeHtml(item.observacao || "")}" onchange="changeItemObservation(${index}, this.value)" placeholder="Observação..."></div>
-        <div style="text-align:right;margin-top:10px;"><strong>Subtotal: ${orderMoney(itemSubtotal)}</strong></div>
       </div>
     `;
   }).join("");
@@ -686,10 +800,23 @@ function changeItemObservation(index, value) {
   currentOrderItems[index].observacao = value;
 }
 
+/* NOVOS HANDLERS — DESCONTO POR ITEM */
+function changeItemDiscountValue(index, value) {
+  if (!currentOrderItems[index]) return;
+  currentOrderItems[index].desconto = Number(value) || 0;
+  renderOrderItems(); updateOrderSummary();
+}
+
+function changeItemDiscountType(index, value) {
+  if (!currentOrderItems[index]) return;
+  currentOrderItems[index].desconto_tipo = value === "%" ? "%" : "R$";
+  renderOrderItems(); updateOrderSummary();
+}
+
 function updateOrderSummary() {
   let subtotal = 0;
   currentOrderItems.forEach(item => {
-    subtotal += (Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0) - (Number(item.desconto) || 0);
+    subtotal += calcularSubtotalItem(item);
   });
   const discount = getNumberValue("orderDiscount");
   const increase = getNumberValue("orderIncrease");
@@ -741,10 +868,7 @@ async function saveOrder() {
   const dataPrevisao = calcularDataPrevisao();
 
   const subtotal = currentOrderItems.reduce((total, item) => {
-    const quantidade = Number(item.quantidade) || 0;
-    const precoUnitario = Number(item.preco_unitario) || 0;
-    const descontoItem = Number(item.desconto) || 0;
-    return total + (quantidade * precoUnitario - descontoItem);
+    return total + calcularSubtotalItem(item);
   }, 0);
 
   const desconto = getNumberValue("orderDiscount");
@@ -789,13 +913,13 @@ async function saveOrder() {
     const itemsData = currentOrderItems.map(item => {
       const quantidade = Number(item.quantidade) || 0;
       const precoUnitario = Number(item.preco_unitario) || 0;
-      const descontoItem = Number(item.desconto) || 0;
-      const subtotalItem = quantidade * precoUnitario - descontoItem;
+      const descontoReal = calcularDescontoItem(item);
+      const subtotalItem = calcularSubtotalItem(item);
 
       return {
         id_loja: currentStore.id_loja, pedido_id: updatedOrder.id, produto_id: Number(item.produto_id),
         variacao_id: item.variacao_id ? Number(item.variacao_id) : null, quantidade: quantidade,
-        preco_unitario: precoUnitario, desconto: descontoItem, subtotal: Number(subtotalItem.toFixed(2)), observacao: item.observacao || null
+        preco_unitario: precoUnitario, desconto: Number(descontoReal.toFixed(2)), subtotal: Number(subtotalItem.toFixed(2)), observacao: item.observacao || null
       };
     });
 
@@ -817,13 +941,13 @@ async function saveOrder() {
     const itemsData = currentOrderItems.map(item => {
       const quantidade = Number(item.quantidade) || 0;
       const precoUnitario = Number(item.preco_unitario) || 0;
-      const descontoItem = Number(item.desconto) || 0;
-      const subtotalItem = quantidade * precoUnitario - descontoItem;
+      const descontoReal = calcularDescontoItem(item);
+      const subtotalItem = calcularSubtotalItem(item);
 
       return {
         id_loja: currentStore.id_loja, pedido_id: order.id, produto_id: Number(item.produto_id),
         variacao_id: item.variacao_id ? Number(item.variacao_id) : null, quantidade: quantidade,
-        preco_unitario: precoUnitario, desconto: descontoItem, subtotal: Number(subtotalItem.toFixed(2)), observacao: item.observacao || null
+        preco_unitario: precoUnitario, desconto: Number(descontoReal.toFixed(2)), subtotal: Number(subtotalItem.toFixed(2)), observacao: item.observacao || null
       };
     });
 
@@ -874,11 +998,13 @@ async function viewOrder(orderId) {
   const itemsHtml = (items || []).map(item => {
     const product = item.gestao_loja_produtos;
     const variation = item.gestao_loja_produtos_variacoes;
+    const descontoItem = Number(item.desconto || 0);
     return `
       <tr>
         <td>${escapeHtml(product?.nome || "-")}${variation?.nome ? `<br><small class="muted">${escapeHtml(variation.nome)}</small>` : ""}</td>
         <td>${orderNumber(item.quantidade)}</td>
         <td>${orderMoney(item.preco_unitario)}</td>
+        <td>${descontoItem > 0.005 ? `<span style="color:#dc2626;">- ${orderMoney(descontoItem)}</span>` : `<span class="muted">—</span>`}</td>
         <td>${orderMoney(item.subtotal)}</td>
         <td>${escapeHtml(item.observacao || "")}</td>
       </tr>
@@ -989,7 +1115,7 @@ async function viewOrder(orderId) {
     <div class="card" style="margin-top:20px;overflow:auto;">
       <h3>Produtos</h3>
       <table class="table" style="margin-top:15px;">
-        <thead><tr><th>Produto</th><th>Quantidade</th><th>Preço unitário</th><th>Subtotal</th><th>Observação</th></tr></thead>
+        <thead><tr><th>Produto</th><th>Quantidade</th><th>Preço unitário</th><th>Desconto item</th><th>Subtotal</th><th>Observação</th></tr></thead>
         <tbody>${itemsHtml}</tbody>
       </table>
     </div>
@@ -1052,9 +1178,15 @@ async function editOrder(orderId) {
 
   editingOrderId = orderId;
   currentOrderItems = (items || []).map(item => ({
-    produto_id: item.produto_id, variacao_id: item.variacao_id || "", quantidade: Number(item.quantidade),
-    preco_unitario: Number(item.preco_unitario), desconto: Number(item.desconto || 0), observacao: item.observacao || ""
-  }));
+  produto_id: item.produto_id,
+  variacao_id: item.variacao_id || "",
+  quantidade: Number(item.quantidade),
+  preco_unitario: Number(item.preco_unitario),
+  desconto: Number(item.desconto || 0),
+  desconto_tipo: "R$",
+  desconto_modo: "total",
+  observacao: item.observacao || ""
+}));
 
   document.getElementById("modal").classList.remove("hidden");
   document.querySelector(".modal-card").style.maxWidth = "900px";
@@ -1194,7 +1326,7 @@ async function confirmRejectOrder(orderId) {
 
 
 /* ======================================================
-   PDF (CORRIGIDO)
+   PDF (com desconto por item)
    ====================================================== */
 
 async function generateOrderPDF(orderId) {
@@ -1210,18 +1342,21 @@ async function generateOrderPDF(orderId) {
   const storeName = escapeHtml(currentStore?.nome_fantasia || currentStore?.nome || "Gestão Loja");
   const storeDocument = escapeHtml(currentStore?.cnpj || "");
   
-  // A MÁGICA ACONTECE AQUI: .trim() remove os espaços/quebras invisíveis no começo e fim do texto
   const address = escapeHtml(String(order.endereco_entrega || "-").trim()).replace(/\n/g, "<br>");
   const obs = order.observacoes ? escapeHtml(String(order.observacoes).trim()).replace(/\n/g, "<br>") : "";
 
-  const itemsHtml = (items || []).map(item => `
-    <tr>
-      <td>${escapeHtml(item.gestao_loja_produtos?.nome || "-")} ${item.gestao_loja_produtos_variacoes?.nome ? `<br><small>${escapeHtml(item.gestao_loja_produtos_variacoes.nome)}</small>` : ""}</td>
-      <td>${orderNumber(item.quantidade)}</td>
-      <td>${orderMoney(item.preco_unitario)}</td>
-      <td>${orderMoney(item.subtotal)}</td>
-    </tr>
-  `).join("");
+  const itemsHtml = (items || []).map(item => {
+    const descontoItem = Number(item.desconto || 0);
+    return `
+      <tr>
+        <td>${escapeHtml(item.gestao_loja_produtos?.nome || "-")} ${item.gestao_loja_produtos_variacoes?.nome ? `<br><small>${escapeHtml(item.gestao_loja_produtos_variacoes.nome)}</small>` : ""}</td>
+        <td>${orderNumber(item.quantidade)}</td>
+        <td>${orderMoney(item.preco_unitario)}</td>
+        <td>${descontoItem > 0.005 ? `<span style="color:#dc2626;">- ${orderMoney(descontoItem)}</span>` : "-"}</td>
+        <td>${orderMoney(item.subtotal)}</td>
+      </tr>
+    `;
+  }).join("");
 
   const recusaPdfBlock = isRejected(order) && order.motivo_recusa
     ? `<div class="section" style="padding:12px;background:#fdecec;border-left:4px solid #b42318;border-radius:6px;"><strong style="color:#b42318;">PEDIDO RECUSADO</strong><br><span style="font-weight:bold;">Motivo:</span> ${escapeHtml(order.motivo_recusa)}</div>`
@@ -1245,24 +1380,17 @@ async function generateOrderPDF(orderId) {
         .title { text-align: right; font-size: 22px; font-weight: bold; }
         .section { margin-top: 20px; page-break-inside: avoid; }
         .section-title { font-weight: bold; font-size: 15px; border-bottom: 1px solid #ccc; padding-bottom: 6px; margin-bottom: 10px; }
-        
-        /* CORREÇÃO DO ESPAÇAMENTO AQUI */
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; align-items: start; }
         .info-grid > div { text-align: left; page-break-inside: avoid; margin: 0; padding: 0; line-height: 1.4; }
         .info-label { font-weight: bold; }
-        
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
         th { background: #f2f2f2; }
         .totals { width: 350px; margin-left: auto; margin-top: 20px; page-break-inside: avoid; }
         .total-row { display: flex; justify-content: space-between; padding: 4px 0; }
         .grand-total { font-size: 20px; font-weight: bold; border-top: 2px solid #222; margin-top: 8px; padding-top: 10px; }
-        
-        /* CORREÇÃO DA OBSERVAÇÃO AQUI */
         .observations { white-space: normal; line-height: 1.4; text-align: left; margin: 0; padding: 0; page-break-inside: avoid; }
-        
         .footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #ccc; text-align: center; font-size: 11px; color: #666; }
-        
         @media print {
           body { padding: 10px; }
           .info-grid > div, tr, td, .observations, .section { page-break-inside: avoid; }
@@ -1317,7 +1445,7 @@ async function generateOrderPDF(orderId) {
       <div class="section">
         <div class="section-title">Produtos</div>
         <table>
-          <thead><tr><th>Produto</th><th>Qtd.</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
+          <thead><tr><th>Produto</th><th>Qtd.</th><th>Valor unit.</th><th>Desconto</th><th>Subtotal</th></tr></thead>
           <tbody>${itemsHtml}</tbody>
         </table>
       </div>
@@ -1348,7 +1476,7 @@ async function generateOrderPDF(orderId) {
 
 
 /* ======================================================
-   NF-e (COMPLETO)
+   NF-e
    ====================================================== */
 
 async function openInvoiceForm(orderId) {
@@ -1490,7 +1618,7 @@ function openNfeFile(url) { if (url) window.open(url, "_blank"); }
 
 
 /* ======================================================
-   PAGAMENTOS (COMPLETO)
+   PAGAMENTOS
    ====================================================== */
 
 window.__pagamentosPorPedido = {};
