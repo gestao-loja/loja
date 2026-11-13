@@ -650,10 +650,7 @@ function renderCatalog() {
 
 function openProduct(productId) {
   const product = catalogProducts.find(p => String(p.id) === String(productId));
-  if (!product) {
-    console.error("Produto não encontrado:", productId);
-    return;
-  }
+  if (!product) return;
 
   selectedProduct = product;
   selectedVariation = null;
@@ -671,30 +668,12 @@ function openProduct(productId) {
   const mainImage = product.imagem_principal || "";
   const galeria = Array.isArray(product.galeria_imagens) ? product.galeria_imagens : [];
 
-  // Junta a imagem principal com a galeria para criar a lista de miniaturas
-  const todasAsFotos = [mainImage, ...galeria].filter(url => url);
-
-  // Monta o HTML das miniaturas (se houver mais de uma foto)
-  let miniaturasHtml = "";
-  if (todasAsFotos.length > 1) {
-    miniaturasHtml = `
-      <div class="catalog-thumbnails">
-        ${todasAsFotos.map((url, index) => `
-          <img 
-            src="${escapeHtml(url)}" 
-            class="catalog-thumb ${index === 0 ? 'active' : ''}"
-            onclick="changeMainImage(this, '${escapeHtml(url)}')"
-            alt="Miniatura ${index + 1}"
-          >
-        `).join('')}
-      </div>
-    `;
-  }
+  // Monta as miniaturas iniciais (do produto)
+  let miniaturasHtml = montarMiniaturas(mainImage, galeria);
 
   content.innerHTML = `
     <div class="catalog-product-detail">
       
-      <!-- LADO ESQUERDO: IMAGEM E MINIATURAS -->
       <div class="catalog-image-wrapper">
         ${mainImage ? `
           <img 
@@ -705,10 +684,12 @@ function openProduct(productId) {
           >
         ` : `<div class="catalog-no-image">Sem imagem</div>`}
         
-        ${miniaturasHtml}
+        <!-- Container onde as miniaturas serão atualizadas -->
+        <div id="catalogGaleriaThumbs">
+          ${miniaturasHtml}
+        </div>
       </div>
 
-      <!-- LADO DIREITO: INFORMAÇÕES -->
       <div class="catalog-product-info">
         <h2>${escapeHtml(product.nome || "")}</h2>
         ${product.descricao ? `<p class="muted">${escapeHtml(product.descricao)}</p>` : ""}
@@ -758,6 +739,25 @@ function openProduct(productId) {
   modal.classList.remove("hidden");
 }
 
+// Função auxiliar para montar o HTML das miniaturas
+function montarMiniaturas(imagemPrincipal, galeria) {
+  const todasAsFotos = [imagemPrincipal, ...galeria].filter(url => url);
+  if (todasAsFotos.length <= 1) return "";
+
+  return `
+    <div class="catalog-thumbnails">
+      ${todasAsFotos.map((url, index) => `
+        <img 
+          src="${escapeHtml(url)}" 
+          class="catalog-thumb ${index === 0 ? 'active' : ''}"
+          onclick="changeMainImage(this, '${escapeHtml(url)}')"
+          alt="Miniatura ${index + 1}"
+        >
+      `).join('')}
+    </div>
+  `;
+}
+
 // NOVA FUNÇÃO: Troca a imagem principal e atualiza a borda da miniatura ativa
 function changeMainImage(element, url) {
   const imgElement = document.getElementById('selectedProductImage');
@@ -765,140 +765,65 @@ function changeMainImage(element, url) {
     imgElement.src = url;
   }
   
-  // Remove a classe 'active' de todas as miniaturas
   const thumbnails = document.querySelectorAll('.catalog-thumb');
   thumbnails.forEach(thumb => thumb.classList.remove('active'));
   
-  // Adiciona a classe 'active' apenas na miniatura clicada
   element.classList.add('active');
 }
 
-function selectCatalogVariation(
-  variationId
-) {
-  if (!selectedProduct) {
-    return;
-  }
+function selectCatalogVariation(variationId) {
+  if (!selectedProduct) return;
 
-  const variation =
-    (
-      selectedProduct.variacoes ||
-      []
-    ).find(
-      item =>
-        String(item.id) ===
-        String(variationId)
-    );
+  const variation = (selectedProduct.variacoes || []).find(item => String(item.id) === String(variationId));
+  selectedVariation = variation || null;
 
-  selectedVariation =
-    variation || null;
+  const imageElement = document.getElementById('selectedProductImage');
+  const priceContainer = document.getElementById('catalogSelectedPrice');
+  const galeriaContainer = document.getElementById('catalogGaleriaThumbs');
 
-  const imageElement =
-    document.getElementById(
-      "selectedProductImage"
-    );
-
-  const imageContainer =
-    document.getElementById(
-      "catalogSelectedVariationImage"
-    );
-
-  const priceContainer =
-    document.getElementById(
-      "catalogSelectedPrice"
-    );
-
+  // Se não selecionou variação, volta para a imagem principal do produto
   if (!variation) {
-    if (
-      imageElement &&
-      selectedProduct.imagem_principal
-    ) {
-      imageElement.src =
-        selectedProduct.imagem_principal;
-    }
-
-    if (imageContainer) {
-      imageContainer.innerHTML = "";
-    }
-
+    if (imageElement) imageElement.src = selectedProduct.imagem_principal || "";
+    
+    // Atualiza o preço
     if (priceContainer) {
-      priceContainer.innerHTML =
-        selectedProduct.preco_venda !== null &&
-        selectedProduct.preco_venda !== undefined
-          ? `
-            <strong>
-              ${money(
-                selectedProduct.preco_venda
-              )}
-            </strong>
-          `
-          : `
-            <span class="muted">
-              Consulte
-            </span>
-          `;
+      priceContainer.innerHTML = selectedProduct.preco_venda !== null && selectedProduct.preco_venda !== undefined 
+        ? `<strong>${money(selectedProduct.preco_venda)}</strong>` 
+        : `<span class="muted">Consulte</span>`;
     }
 
+    // Atualiza as miniaturas com as fotos do produto
+    if (galeriaContainer) {
+      galeriaContainer.innerHTML = montarMiniaturas(
+        selectedProduct.imagem_principal, 
+        selectedProduct.galeria_imagens || []
+      );
+    }
     return;
   }
 
-  const variationImage =
-    variation.imagem ||
-    "";
+  // Se selecionou uma variação, usa a imagem e a galeria dela
+  const variationImage = variation.imagem || selectedProduct.imagem_principal || "";
+  const variationGallery = Array.isArray(variation.galeria_imagens) ? variation.galeria_imagens : [];
 
-  if (variationImage) {
-    if (imageElement) {
-      imageElement.src =
-        variationImage;
-    }
+  if (imageElement) {
+    imageElement.src = variationImage;
+  }
 
-    if (imageContainer) {
-      imageContainer.innerHTML = "";
-    }
-  } else {
-    if (
-      imageElement &&
-      selectedProduct.imagem_principal
-    ) {
-      imageElement.src =
-        selectedProduct.imagem_principal;
-    }
-
-    if (imageContainer) {
-      imageContainer.innerHTML = "";
+  // Atualiza o preço
+  if (priceContainer) {
+    if (variation.preco_venda !== null && variation.preco_venda !== undefined) {
+      priceContainer.innerHTML = `<strong>${money(variation.preco_venda)}</strong>`;
+    } else if (selectedProduct.preco_venda !== null && selectedProduct.preco_venda !== undefined) {
+      priceContainer.innerHTML = `<strong>${money(selectedProduct.preco_venda)}</strong>`;
+    } else {
+      priceContainer.innerHTML = `<span class="muted">Consulte</span>`;
     }
   }
 
-  if (priceContainer) {
-    if (
-      variation.preco_venda !== null &&
-      variation.preco_venda !== undefined
-    ) {
-      priceContainer.innerHTML = `
-        <strong>
-          ${money(
-            variation.preco_venda
-          )}
-        </strong>
-      `;
-    } else if (
-      selectedProduct.preco_venda !== null &&
-      selectedProduct.preco_venda !== undefined
-    ) {
-      priceContainer.innerHTML = `
-        <strong>
-          ${money(
-            selectedProduct.preco_venda
-          )}
-        </strong>
-      `;
-    } else {
-      priceContainer.innerHTML = `
-        <span class="muted">
-          Consulte
-        </span>
-      `;
-    }
+  // Atualiza as miniaturas com a imagem e galeria da variação
+  if (galeriaContainer) {
+    galeriaContainer.innerHTML = montarMiniaturas(variationImage, variationGallery);
   }
 }
 
