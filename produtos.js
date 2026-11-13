@@ -1771,44 +1771,22 @@ async function saveProduct(ev, id) {
   ev.preventDefault();
 
   if (!currentStore) {
-
-    alert(
-      "Não foi possível identificar a loja."
-    );
-
+    alert("Não foi possível identificar a loja.");
     return;
-
   }
 
-  const nomeProduto =
-    $("p_nome").value.trim();
-
+  const nomeProduto = $("p_nome").value.trim();
   if (!nomeProduto) {
-
-    alert(
-      "Informe o nome do produto."
-    );
-
+    alert("Informe o nome do produto.");
     return;
-
   }
 
-  // Validação do NCM
-  const ncmValue =
-    $("p_ncm").value.replace(/\D/g, "");
-
+  const ncmValue = $("p_ncm").value.replace(/\D/g, "");
   if (ncmValue && ncmValue.length !== 8) {
-
-    alert(
-      "O NCM deve ter exatamente 8 dígitos.\n\n" +
-      "Valor informado: " + ncmValue
-    );
-
+    alert("O NCM deve ter exatamente 8 dígitos.\n\nValor informado: " + ncmValue);
     return;
-
   }
 
-  // Recalcula a precificação para garantir consistência
   atualizarPrecificacao();
 
   const precResultado = calcularPrecificacao({
@@ -1823,105 +1801,46 @@ async function saveProduct(ev, id) {
   });
 
   if (precResultado.erro) {
-
-    alert(
-      "Não foi possível calcular a precificação:\n\n" +
-      precResultado.erro
-    );
-
+    alert("Não foi possível calcular a precificação:\n\n" + precResultado.erro);
     return;
-
   }
 
   const payload = {
-
-    id_loja:
-      currentStore.id_loja,
-
-    nome:
-      nomeProduto,
-
-    categoria_id:
-      $("p_categoria").value
-        ? Number($("p_categoria").value)
-        : null,
-
-    descricao:
-      $("p_descricao").value.trim() || null,
-
-    unidade_medida:
-      $("p_unidade").value.trim() || "UN",
-
-    preco_venda:
-      Number($("p_preco").value || 0),
-
-    preco_custo:
-      Number($("p_custo").value || 0),
-
-    estoque_minimo:
-      Number($("p_minimo").value || 0),
-
-    ncm:
-      ncmValue || null,
-
-    cfop:
-      $("p_cfop").value.replace(/\D/g, "") || "5102",
-
-    cest:
-      $("p_cest").value.replace(/\D/g, "") || null,
-
-    unidade:
-      $("p_unidade_fiscal").value || "UN",
-
-    origem_mercadoria:
-      $("p_origem_mercadoria").value || "0",
-
-    ativo:
-      $("p_ativo").checked,
-
-    exibir_catalogo:
-      $("p_catalogo").checked,
-
-    exibir_preco_catalogo:
-      $("p_preco_catalogo").checked,
-
-    observacoes:
-      $("p_observacoes").value.trim() || null,
-
-    // ===== PRECIFICAÇÃO =====
-    precificacao_materiais:
-      Number($("prec_materiais").value) || 0,
-
-    precificacao_embalagem:
-      Number($("prec_embalagem").value) || 0,
-
-    precificacao_mao_obra:
-      Number($("prec_mao_obra").value) || 0,
-
-    precificacao_outros:
-      Number($("prec_outros").value) || 0,
-
-    precificacao_taxas_percentual:
-      Number($("prec_taxas").value) || 0,
-
-    precificacao_impostos_percentual:
-      Number($("prec_impostos").value) || 0,
-
-    precificacao_despesas_percentual:
-      Number($("prec_despesas").value) || 0,
-
-    precificacao_margem_percentual:
-      Number($("prec_margem").value) || 0,
-
-    precificacao_custo_total:
-      precResultado.custoTotal,
-
-    precificacao_preco_sugerido:
-      precResultado.precoSugerido
-
+    id_loja: currentStore.id_loja,
+    nome: nomeProduto,
+    categoria_id: $("p_categoria").value ? Number($("p_categoria").value) : null,
+    descricao: $("p_descricao").value.trim() || null,
+    unidade_medida: $("p_unidade").value.trim() || "UN",
+    preco_venda: Number($("p_preco").value || 0),
+    preco_custo: Number($("p_custo").value || 0),
+    estoque_minimo: Number($("p_minimo").value || 0),
+    ncm: ncmValue || null,
+    cfop: $("p_cfop").value.replace(/\D/g, "") || "5102",
+    cest: $("p_cest").value.replace(/\D/g, "") || null,
+    unidade: $("p_unidade_fiscal").value || "UN",
+    origem_mercadoria: $("p_origem_mercadoria").value || "0",
+    ativo: $("p_ativo").checked,
+    exibir_catalogo: $("p_catalogo").checked,
+    exibir_preco_catalogo: $("p_preco_catalogo").checked,
+    observacoes: $("p_observacoes").value.trim() || null,
+    precificacao_materiais: Number($("prec_materiais").value) || 0,
+    precificacao_embalagem: Number($("prec_embalagem").value) || 0,
+    precificacao_mao_obra: Number($("prec_mao_obra").value) || 0,
+    precificacao_outros: Number($("prec_outros").value) || 0,
+    precificacao_taxas_percentual: Number($("prec_taxas").value) || 0,
+    precificacao_impostos_percentual: Number($("prec_impostos").value) || 0,
+    precificacao_despesas_percentual: Number($("prec_despesas").value) || 0,
+    precificacao_margem_percentual: Number($("prec_margem").value) || 0,
+    precificacao_custo_total: precResultado.custoTotal,
+    precificacao_preco_sugerido: precResultado.precoSugerido
   };
 
   let result;
+
+  // ============================================================
+  // CORREÇÃO: Declarada AQUI (fora do try) para o catch poder acessar
+  // ============================================================
+  let urlNovaParaApagar = null;
 
   try {
 
@@ -1930,57 +1849,35 @@ async function saveProduct(ev, id) {
     // ============================================================
     let imagemPrincipalUrl = currentProductImageUrl;
     let urlOriginalParaApagar = null;
-    let urlNovaParaApagar = null;
 
     if (productImageNewFile) {
-
-      // Vai subir uma nova imagem → depois do save, apaga a antiga
       const urlNova = await uploadProductImage(productImageNewFile);
-
       urlOriginalParaApagar = productImageOriginalUrl || null;
       productImageNewUrl = urlNova;
-      urlNovaParaApagar = urlNova;
-
+      urlNovaParaApagar = urlNova; // <-- Atribui a variável de fora
       imagemPrincipalUrl = urlNova;
-
     } else if (productImageRemoved) {
-
-      // Vai remover a imagem → depois do save, apaga a antiga
       urlOriginalParaApagar = productImageOriginalUrl || null;
-
       imagemPrincipalUrl = null;
-
     }
 
     payload.imagem_principal = imagemPrincipalUrl || null;
 
     if (id) {
-
       // ===== EDIÇÃO =====
-      // Preserva o SKU existente do produto.
-      // O trigger do banco só gera SKU se NEW.sku vier nulo/vazio.
-      const produtoAtual =
-        products.find(
-          p => String(p.id) === String(id)
-        );
-
+      const produtoAtual = products.find(p => String(p.id) === String(id));
       if (produtoAtual?.sku) {
         payload.sku = produtoAtual.sku;
       }
 
-      // 1. Atualiza o produto
       result = await db
         .from("gestao_loja_produtos")
         .update(payload)
         .eq("id", id)
         .eq("id_loja", currentStore.id_loja);
 
-      if (result.error) {
-        throw result.error;
-      }
+      if (result.error) throw result.error;
 
-      // 2. ATUALIZA AS VARIAÇÕES VINCULADAS A ESTE PRODUTO
-      // (Repassa custo, venda, impostos e dados fiscais)
       const { error: variacoesError } = await db
         .from("gestao_loja_produtos_variacoes")
         .update({
@@ -1997,31 +1894,18 @@ async function saveProduct(ev, id) {
 
       if (variacoesError) {
         console.error("Erro ao atualizar variações:", variacoesError);
-        // Avisa o usuário, mas não cancela o salvamento do produto,
-        // pois o produto em si já foi salvo.
-        alert(
-          "O produto foi salvo, mas ocorreu um erro ao atualizar as variações:\n" +
-          variacoesError.message
-        );
+        alert("O produto foi salvo, mas ocorreu um erro ao atualizar as variações:\n" + variacoesError.message);
       }
 
     } else {
-
       // ===== CADASTRO NOVO =====
-      // O SKU NÃO é enviado. O trigger BEFORE INSERT
-      // (gerar_sku_produto) preenche com:
-      //   PREFIXO-NNNNN
-      // onde NNNNN = MAX(sequência existente na loja) + 1.
       result = await db
         .from("gestao_loja_produtos")
         .insert(payload)
         .select("id, sku")
         .single();
 
-      if (result.error) {
-        throw result.error;
-      }
-
+      if (result.error) throw result.error;
     }
 
     // Se o save deu certo, apaga a imagem antiga do bucket
@@ -2029,7 +1913,6 @@ async function saveProduct(ev, id) {
       await apagarImagemDoBucketProduto(urlOriginalParaApagar);
     }
 
-    // Reseta controles de imagem
     currentProductImageUrl = null;
     productImageOriginalUrl = null;
     productImageRemoved = false;
@@ -2041,24 +1924,17 @@ async function saveProduct(ev, id) {
 
   } catch (e) {
 
-    console.error(
-      "Erro ao salvar produto:",
-      e
-    );
+    console.error("Erro ao salvar produto:", e);
 
     // Se falhou e havia imagem nova enviada, apaga do bucket
+    // (Agora o 'urlNovaParaApagar' está no escopo correto)
     if (urlNovaParaApagar) {
       await apagarImagemDoBucketProduto(urlNovaParaApagar);
       productImageNewUrl = null;
     }
 
-    alert(
-      "Erro ao salvar produto:\n\n" +
-      (e.message || "Erro desconhecido.")
-    );
-
+    alert("Erro ao salvar produto:\n\n" + (e.message || "Erro desconhecido."));
   }
-
 }
 
 
