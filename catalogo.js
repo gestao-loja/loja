@@ -649,257 +649,128 @@ function renderCatalog() {
 }
 
 function openProduct(productId) {
-  const product =
-    catalogProducts.find(
-      p =>
-        String(p.id) ===
-        String(productId)
-    );
-
+  const product = catalogProducts.find(p => String(p.id) === String(productId));
   if (!product) {
-    console.error(
-      "Produto não encontrado:",
-      productId
-    );
-
+    console.error("Produto não encontrado:", productId);
     return;
   }
 
-  selectedProduct =
-    product;
+  selectedProduct = product;
+  selectedVariation = null;
+  selectedQuantity = 1;
 
-  selectedVariation =
-    null;
+  const modal = document.getElementById("productModal");
+  const title = document.getElementById("productModalTitle");
+  const content = document.getElementById("productModalContent");
 
-  selectedQuantity =
-    1;
+  if (!modal || !title || !content) return;
 
-  const modal =
-    document.getElementById(
-      "productModal"
-    );
+  title.textContent = product.nome || "Produto";
 
-  const title =
-    document.getElementById(
-      "productModalTitle"
-    );
+  const variations = Array.isArray(product.variacoes) ? sortVariations(product.variacoes) : [];
+  const mainImage = product.imagem_principal || "";
+  const galeria = Array.isArray(product.galeria_imagens) ? product.galeria_imagens : [];
 
-  const content =
-    document.getElementById(
-      "productModalContent"
-    );
+  // Junta a imagem principal com a galeria para criar a lista de miniaturas
+  const todasAsFotos = [mainImage, ...galeria].filter(url => url);
 
-  if (
-    !modal ||
-    !title ||
-    !content
-  ) {
-    console.error(
-      "Elementos do modal do produto não encontrados."
-    );
-
-    return;
+  // Monta o HTML das miniaturas (se houver mais de uma foto)
+  let miniaturasHtml = "";
+  if (todasAsFotos.length > 1) {
+    miniaturasHtml = `
+      <div class="catalog-thumbnails">
+        ${todasAsFotos.map((url, index) => `
+          <img 
+            src="${escapeHtml(url)}" 
+            class="catalog-thumb ${index === 0 ? 'active' : ''}"
+            onclick="changeMainImage(this, '${escapeHtml(url)}')"
+            alt="Miniatura ${index + 1}"
+          >
+        `).join('')}
+      </div>
+    `;
   }
-
-  title.textContent =
-    product.nome ||
-    "Produto";
-
-  /*
-   * Reforça a ordenação em runtime, garantindo que
-   * mesmo que algo mude depois do loadCatalog, a lista
-   * apareça agrupada por cor e por tamanho.
-   */
-  const variations =
-    Array.isArray(product.variacoes)
-      ? sortVariations(product.variacoes)
-      : [];
-
-  const mainImage =
-    product.imagem_principal ||
-    "";
 
   content.innerHTML = `
     <div class="catalog-product-detail">
-
-      <div class="catalog-product-image">
-
-        ${
-          mainImage
-            ? `
-              <img
-                id="selectedProductImage"
-                src="${escapeHtml(mainImage)}"
-                alt="${escapeHtml(
-                  product.nome || ""
-                )}"
-              >
-            `
-            : `
-              <div class="catalog-no-image">
-                Sem imagem
-              </div>
-            `
-        }
-
+      
+      <!-- LADO ESQUERDO: IMAGEM E MINIATURAS -->
+      <div class="catalog-image-wrapper">
+        ${mainImage ? `
+          <img 
+            id="selectedProductImage" 
+            src="${escapeHtml(mainImage)}" 
+            alt="${escapeHtml(product.nome || "")}"
+            class="catalog-main-image"
+          >
+        ` : `<div class="catalog-no-image">Sem imagem</div>`}
+        
+        ${miniaturasHtml}
       </div>
 
+      <!-- LADO DIREITO: INFORMAÇÕES -->
       <div class="catalog-product-info">
+        <h2>${escapeHtml(product.nome || "")}</h2>
+        ${product.descricao ? `<p class="muted">${escapeHtml(product.descricao)}</p>` : ""}
 
-        <h2>
-          ${escapeHtml(
-            product.nome || ""
-          )}
-        </h2>
-
-        ${
-          product.descricao
-            ? `
-              <p class="muted">
-                ${escapeHtml(
-                  product.descricao
-                )}
-              </p>
-            `
-            : ""
-        }
-
-        ${
-          variations.length > 0
-            ? `
-              <div class="catalog-form-group">
-
-                <label>
-                  Variação
-                </label>
-
-                <select
-                  id="catalogVariationSelect"
-                  onchange="selectCatalogVariation(this.value)"
-                >
-
-                  <option value="">
-                    Selecione uma variação
-                  </option>
-
-                  ${variations
-                    .map(
-                      variation => `
-                        <option
-                          value="${variation.id}"
-                        >
-                          ${escapeHtml(
-                            variation.nome ||
-                            "Variação"
-                          )}
-
-                          ${
-                            variation.preco_venda !== null &&
-                            variation.preco_venda !== undefined
-                              ? " - " +
-                                money(
-                                  variation.preco_venda
-                                )
-                              : ""
-                          }
-
-                        </option>
-                      `
-                    )
-                    .join("")}
-
-                </select>
-
-              </div>
-            `
-            : ""
-        }
-
-        <div
-          id="catalogSelectedVariationImage"
-        ></div>
-
-        <div id="catalogSelectedPrice">
-
-          ${
-            product.preco_venda !== null &&
-            product.preco_venda !== undefined
-              ? `
-                <strong>
-                  ${money(
-                    product.preco_venda
-                  )}
-                </strong>
-              `
-              : `
-                <span class="muted">
-                  Consulte
-                </span>
-              `
-          }
-
-        </div>
-
-        <div class="catalog-form-group">
-
-          <label>
-            Quantidade
-          </label>
-
-          <div class="catalog-quantity">
-
-            <button
-              type="button"
-              onclick="changeCatalogQuantity(-1)"
-            >
-              −
-            </button>
-
-            <span id="catalogQuantity">
-              1
-            </span>
-
-            <button
-              type="button"
-              onclick="changeCatalogQuantity(1)"
-            >
-              +
-            </button>
-
+        ${variations.length > 0 ? `
+          <div class="catalog-form-group" style="margin-top: 20px;">
+            <label>Variação</label>
+            <select id="catalogVariationSelect" onchange="selectCatalogVariation(this.value)" style="width: 100%; padding: 10px; border: 1px solid #d8dce5; border-radius: 8px;">
+              <option value="">Selecione uma variação</option>
+              ${variations.map(variation => `
+                <option value="${variation.id}">
+                  ${escapeHtml(variation.nome || "Variação")}
+                  ${variation.preco_venda !== null && variation.preco_venda !== undefined ? " - " + money(variation.preco_venda) : ""}
+                </option>
+              `).join("")}
+            </select>
           </div>
+        ` : ""}
 
+        <div id="catalogSelectedVariationImage"></div>
+
+        <div id="catalogSelectedPrice" style="font-size: 24px; color: #1a1f2b; margin: 15px 0;">
+          ${product.preco_venda !== null && product.preco_venda !== undefined ? `<strong>${money(product.preco_venda)}</strong>` : `<span class="muted">Consulte</span>`}
         </div>
 
         <div class="catalog-form-group">
-
-          <label>
-            Observação do pedido
-          </label>
-
-          <textarea
-            id="catalogItemObservation"
-            rows="4"
-            placeholder="Ex.: qual arte deseja, cor, tamanho, detalhes do pedido..."
-          ></textarea>
-
+          <label>Quantidade</label>
+          <div class="catalog-quantity">
+            <button type="button" onclick="changeCatalogQuantity(-1)">−</button>
+            <span id="catalogQuantity">1</span>
+            <button type="button" onclick="changeCatalogQuantity(1)">+</button>
+          </div>
         </div>
 
-        <button
-          type="button"
-          class="btn btn-primary catalog-primary"
-          onclick="addCatalogItem()"
-        >
+        <div class="catalog-form-group">
+          <label>Observação do pedido</label>
+          <textarea id="catalogItemObservation" rows="4" placeholder="Ex.: qual arte deseja, cor, tamanho, detalhes do pedido..." style="width: 100%; padding: 10px; border: 1px solid #d8dce5; border-radius: 8px;"></textarea>
+        </div>
+
+        <button type="button" class="btn btn-primary catalog-primary" onclick="addCatalogItem()" style="width: 100%; padding: 15px; font-size: 16px; font-weight: bold; margin-top: 20px;">
           Adicionar ao carrinho
         </button>
-
       </div>
-
     </div>
   `;
 
-  modal.classList.remove(
-    "hidden"
-  );
+  modal.classList.remove("hidden");
+}
+
+// NOVA FUNÇÃO: Troca a imagem principal e atualiza a borda da miniatura ativa
+function changeMainImage(element, url) {
+  const imgElement = document.getElementById('selectedProductImage');
+  if (imgElement) {
+    imgElement.src = url;
+  }
+  
+  // Remove a classe 'active' de todas as miniaturas
+  const thumbnails = document.querySelectorAll('.catalog-thumb');
+  thumbnails.forEach(thumb => thumb.classList.remove('active'));
+  
+  // Adiciona a classe 'active' apenas na miniatura clicada
+  element.classList.add('active');
 }
 
 function selectCatalogVariation(
@@ -2152,6 +2023,9 @@ function showCatalogMessage(message) {
 
 window.openProduct =
   openProduct;
+
+window.changeMainImage = 
+  changeMainImage;
 
 window.closeProductModal =
   closeProductModal;
