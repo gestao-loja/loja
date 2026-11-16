@@ -10,20 +10,128 @@
   <script src="pedidos.js" defer></script>
   
   <style>
-    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
-    .calendar-day-name { text-align: center; font-weight: bold; color: #666; padding-bottom: 10px; font-size: 12px; text-transform: uppercase; }
-    .calendar-day { min-height: 100px; border: 1px solid #eee; border-radius: 8px; padding: 8px; background: #fafafa; transition: 0.2s; }
+    /* Container do cabeçalho com os botões de navegação */
+    .calendar-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 20px; 
+      gap: 10px;
+    }
+    
+    /* Grade do calendário (Desktop) */
+    .calendar-grid { 
+      display: grid; 
+      grid-template-columns: repeat(7, 1fr); 
+      gap: 10px; 
+      background: #fff; 
+      padding: 20px; 
+      border-radius: 12px; 
+      border: 1px solid var(--border);
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    .calendar-day-name { 
+      text-align: center; 
+      font-weight: bold; 
+      color: #666; 
+      padding-bottom: 10px; 
+      font-size: 12px; 
+      text-transform: uppercase; 
+    }
+    
+    .calendar-day { 
+      min-height: 100px; 
+      border: 1px solid #eee; 
+      border-radius: 8px; 
+      padding: 8px; 
+      background: #fafafa; 
+      transition: 0.2s; 
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    
     .calendar-day.today { border-color: #4f46e5; background: #eef2ff; }
     .calendar-day.empty { background: transparent; border: none; }
     .day-number { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 5px; }
     
     /* Estilo do botão do cliente */
-    .event-badge { display: block; width: 100%; text-align: left; border: none; font-size: 11px; padding: 4px 6px; border-radius: 4px; margin-bottom: 4px; background: #dbeafe; color: #1e40af; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; transition: filter 0.2s; }
+    .event-badge { 
+      display: block; 
+      width: 100%; 
+      text-align: left; 
+      border: none; 
+      font-size: 11px; 
+      padding: 4px 6px; 
+      border-radius: 4px; 
+      margin-bottom: 4px; 
+      background: #dbeafe; 
+      color: #1e40af; 
+      font-weight: bold; 
+      overflow: hidden; 
+      text-overflow: ellipsis; 
+      white-space: nowrap; 
+      cursor: pointer; 
+      transition: filter 0.2s; 
+    }
+    
     .event-badge.retirada { background: #ede9fe; color: #5145cd; }
     .event-badge:hover { filter: brightness(0.9); }
     
     #loadingCalendario { padding: 20px; color: #666; text-align: center; }
+
+    /* =========================================
+       CORREÇÃO PARA CELULAR (Telas menores)
+       ========================================= */
+    @media (max-width: 768px) {
+      .calendar-grid { 
+        gap: 2px; /* Reduz o espaço entre os dias */
+        padding: 5px; /* Reduz a borda interna */
+        border-radius: 8px;
+      }
+      
+      .calendar-day-name {
+        font-size: 9px;
+        padding-bottom: 5px;
+      }
+
+      .calendar-day { 
+        min-height: 60px; /* Caixinhas mais baixas */
+        padding: 3px; 
+        border-radius: 4px;
+      }
+
+      .day-number { 
+        font-size: 10px; 
+        margin-bottom: 2px; 
+      }
+
+      .event-badge { 
+        font-size: 8px; /* Fonte menor para caber o nome */
+        padding: 2px 3px; 
+        margin-bottom: 2px;
+        border-radius: 3px;
+      }
+
+      .calendar-header {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      .calendar-header h2 {
+        font-size: 16px !important;
+        width: 100%;
+        text-align: center;
+        order: -1;
+        margin-bottom: 10px !important;
+      }
+
+      .calendar-header button {
+        font-size: 12px;
+        padding: 8px 12px;
+      }
+    }
   </style>
 </head>
 <body data-page="calendario_entregas">
@@ -81,7 +189,7 @@
 
     async function carregarCalendario() {
       try {
-        // ALTERAÇÃO AQUI: Adicionando o JOIN para trazer o nome do cliente
+        // Adicionando o JOIN para trazer o nome do cliente
         const { data, error } = await db.from("gestao_loja_pedidos")
           .select(`
             id, numero, data_previsao_entrega, tipo_entrega, status,
