@@ -1,144 +1,72 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
-
 <head>
-
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestão Loja - Variações</title>
-
-  <link
-    rel="stylesheet"
-    href="styles.css">
-
-  <script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-  </script>
-
-  <script
-    src="app.js">
-  </script>
-
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
 </head>
-
 <body data-page="variacoes">
 
-  <div
-    id="app"
-    class="app">
-
+  <div id="app" class="app">
     <div id="menu"></div>
-
     <main class="main">
-
       <div class="topbar">
-
         <div>
-
-          <h1>
-            Variações
-          </h1>
-
-          <div
-            class="muted"
-            id="pageSubtitle">
-          </div>
-
+          <h1>Variações</h1>
+          <div class="muted" id="pageSubtitle"></div>
         </div>
-
         <div class="user-info">
-
           <br>
-
           <span id="userEmail"></span>
-
         </div>
-
       </div>
 
       <div id="content">
-
         <div class="section">
-
           <div class="section-head">
-
             <div>
-
-              <h2>
-                Variações cadastradas
-              </h2>
-
-              <div
-                class="muted">
-                Gerencie as variações, estoque e imagens dos produtos.
-              </div>
-
+              <h2>Variações cadastradas</h2>
+              <div class="muted">Gerencie as variações, estoque e imagens dos produtos.</div>
             </div>
-
-            <button
-              class="btn btn-primary"
-              onclick="newVariation()">
-
-              + Nova variação
-
-            </button>
-
+            <button class="btn btn-primary" onclick="newVariation()">+ Nova variação</button>
           </div>
 
-          <div
-            id="variationsTable"
-            class="loading">
+          <!-- BARRA DE FILTROS -->
+          <div class="filters-bar" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="flex: 1; min-width: 200px;">
+              <input type="text" id="filterSearch" class="form-control" placeholder="Buscar por produto, variação ou SKU..." oninput="applyFilters()" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+            </div>
+            <div style="width: 200px;">
+              <select id="filterStatus" class="form-control" onchange="applyFilters()" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                <option value="">Todos os status</option>
+                <option value="ativo">Apenas Ativos</option>
+                <option value="inativo">Apenas Inativos</option>
+                <option value="baixo">Estoque Baixo</option>
+              </select>
+            </div>
+          </div>
 
+          <div id="variationsTable" class="loading">
             Carregando...
-
           </div>
-
         </div>
-
       </div>
-
     </main>
-
   </div>
 
-  <div
-    id="modal"
-    class="modal hidden">
-
+  <div id="modal" class="modal hidden">
     <div class="modal-card">
-
       <div class="modal-head">
-
-        <h2 id="modalTitle">
-          Nova variação
-        </h2>
-
-        <button
-          class="close"
-          onclick="closeModal()">
-
-          ×
-
-        </button>
-
+        <h2 id="modalTitle">Nova variação</h2>
+        <button class="close" onclick="closeModal()">×</button>
       </div>
-
       <div id="modalContent"></div>
-
     </div>
-
   </div>
 
-  <script
-    src="variacoes.js"
-    defer>
-  </script>
-
+  <script src="variacoes.js" defer></script>
 </body>
-
 </html>
