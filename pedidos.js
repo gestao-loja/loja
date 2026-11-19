@@ -918,34 +918,24 @@ async function saveOrder() {
 
   const dataPrevisao = calcularDataPrevisao();
 
-  const subtotal = currentOrderItems.reduce((total, item) => {
-    return total + calcularSubtotalItem(item);
-  }, 0);
-
-  const desconto = getNumberValue("orderDiscount");
-  const acrescimo = getNumberValue("orderIncrease");
-  const maoDeObra = getNumberValue("orderLabor");
-  const frete = getNumberValue("orderFreight");
-
+  // 1. Lendo e forçando os valores
+  const frete = Number(getNumberValue("orderFreight").toFixed(2));
+  const desconto = Number(getNumberValue("orderDiscount").toFixed(2));
+  const acrescimo = Number(getNumberValue("orderIncrease").toFixed(2));
+  const maoDeObra = Number(getNumberValue("orderLabor").toFixed(2));
+  
+  const subtotal = currentOrderItems.reduce((total, item) => total + calcularSubtotalItem(item), 0);
   const valorTotal = Math.max(subtotal - desconto + acrescimo + frete + maoDeObra, 0);
+  
   const subtotalFinal = Number(subtotal.toFixed(2));
-  const descontoFinal = Number(desconto.toFixed(2));
-  const acrescimoFinal = Number(acrescimo.toFixed(2));
-  const freteFinal = Number(frete.toFixed(2));
-  const maoDeObraFinal = Number(maoDeObra.toFixed(2));
   const valorTotalFinal = Number(valorTotal.toFixed(2));
 
+  // 2. Monta os dados básicos (SEM OS VALORES NUMÉRICOS)
   const baseOrderData = {
     id_loja: currentStore.id_loja,
     cliente_id: Number(clientId),
     data_pedido: document.getElementById("orderDate").value,
     tipo_entrega: getTipoEntregaFromForm(),
-    subtotal: subtotalFinal,
-    desconto: descontoFinal,
-    acrescimo: acrescimoFinal,
-    frete: freteFinal,
-    mao_de_obra: maoDeObraFinal,
-    valor_total: valorTotalFinal,
     prazo_entrega: document.getElementById("orderDeliveryDeadline").value.trim(),
     data_previsao_entrega: dataPrevisao,
     forma_pagamento: document.getElementById("orderPayment").value.trim(),
@@ -953,29 +943,43 @@ async function saveOrder() {
     observacoes: document.getElementById("orderNotes").value.trim()
   };
 
+  // ==========================================
+  // EDIÇÃO
+  // ==========================================
   if (editingOrderId) {
-    const orderData = { ...baseOrderData, status: "Pendente" };
-    const { data: updatedOrder, error: orderError } = await db.from("gestao_loja_pedidos").update(orderData).eq("id", editingOrderId).eq("id_loja", currentStore.id_loja).select().single();
+    // 2.1 Atualiza os dados básicos
+    const { error: orderError } = await db
+      .from("gestao_loja_pedidos")
+      .update({ ...baseOrderData, status: "Pendente" })
+      .eq("id", editingOrderId)
+      .eq("id_loja", currentStore.id_loja);
+
     if (orderError) { alert("Erro ao atualizar pedido:\n" + orderError.message); return; }
 
-    const { error: deleteItemsError } = await db.from("gestao_loja_pedidos_itens").delete().eq("pedido_id", editingOrderId);
-    if (deleteItemsError) { alert("Erro ao atualizar os itens:\n" + deleteItemsError.message); return; }
-
-    const itemsData = currentOrderItems.map(item => {
-      const quantidade = Number(item.quantidade) || 0;
-      const precoUnitario = Number(item.preco_unitario) || 0;
-      const descontoReal = calcularDescontoItem(item);
-      const subtotalItem = calcularSubtotalItem(item);
-
-      return {
-        id_loja: currentStore.id_loja, pedido_id: updatedOrder.id, produto_id: Number(item.produto_id),
-        variacao_id: item.variacao_id ? Number(item.variacao_id) : null, quantidade: quantidade,
-        preco_unitario: precoUnitario, desconto: Number(descontoReal.toFixed(2)), subtotal: Number(subtotalItem.toFixed(2)), observacao: item.observacao || null
-      };
+    // 2.2 FORÇA OS VALORES VIA RPC (A prova de falhas!)
+    const { error: rpcError } = await db.rpc('forcar_valores_pedido', {
+      p_id: editingOrderId,
+      p_subtotal: subtotalFinal,
+      p_frete: frete,
+      p_desconto: desconto,
+      p_acrescimo: acrescimo,
+      p_mao_de_obra: maoDeObra,
+      p_valor_total: valorTotalFinal
     });
 
-    const { error: itemsError } = await db.from("gestao_loja_pedidos_itens").insert(itemsData);
-    if (itemsError) { alert("Erro ao salvar os itens do pedido:\n" + itemsError.message); return; }
+    if (rpcError) { alert("Erro ao salvar valores:\n" + rpcError.message); return; }
+
+    // 2.3 Atualiza os itens
+    await db.from("gestao_loja_pedidos_itens").delete().eq("pedido_id", editingOrderId);
+    
+    const itemsData = currentOrderItems.map(item => ({
+      id_loja: currentStore.id_loja, pedido_id: editingOrderId, produto_id: Number(item.produto_id),
+      variacao_id: item.variacao_id ? Number(item.variacao_id) : null, quantidade: Number(item.quantidade) || 0,
+      preco_unitario: Number(item.preco_unitario) || 0, desconto: Number(calcularDescontoItem(item).toFixed(2)),
+      subtotal: Number(calcularSubtotalItem(item).toFixed(2)), observacao: item.observacao || null
+    }));
+
+    await db.from("gestao_loja_pedidos_itens").insert(itemsData);
 
     editingOrderId = null; currentOrderItems = [];
     closeModal(); await loadOrders();
@@ -983,24 +987,41 @@ async function saveOrder() {
     return;
   }
 
+  // ==========================================
+  // CRIAÇÃO
+  // ==========================================
   try {
     const numeroPedido = await proximaSequenciaPedido();
-    const orderData = { ...baseOrderData, numero: numeroPedido, status: "Pendente" };
-    const { data: order, error } = await db.from("gestao_loja_pedidos").insert(orderData).select().single();
+    
+    // 3.1 Cria o pedido básico (sem valores)
+    const { data: order, error } = await db
+      .from("gestao_loja_pedidos")
+      .insert({ ...baseOrderData, numero: numeroPedido, status: "Pendente" })
+      .select()
+      .single();
+
     if (error) { alert("Erro ao salvar pedido:\n" + error.message); return; }
 
-    const itemsData = currentOrderItems.map(item => {
-      const quantidade = Number(item.quantidade) || 0;
-      const precoUnitario = Number(item.preco_unitario) || 0;
-      const descontoReal = calcularDescontoItem(item);
-      const subtotalItem = calcularSubtotalItem(item);
-
-      return {
-        id_loja: currentStore.id_loja, pedido_id: order.id, produto_id: Number(item.produto_id),
-        variacao_id: item.variacao_id ? Number(item.variacao_id) : null, quantidade: quantidade,
-        preco_unitario: precoUnitario, desconto: Number(descontoReal.toFixed(2)), subtotal: Number(subtotalItem.toFixed(2)), observacao: item.observacao || null
-      };
+    // 3.2 FORÇA OS VALORES VIA RPC
+    const { error: rpcError } = await db.rpc('forcar_valores_pedido', {
+      p_id: order.id,
+      p_subtotal: subtotalFinal,
+      p_frete: frete,
+      p_desconto: desconto,
+      p_acrescimo: acrescimo,
+      p_mao_de_obra: maoDeObra,
+      p_valor_total: valorTotalFinal
     });
+
+    if (rpcError) { alert("Erro ao salvar valores:\n" + rpcError.message); return; }
+
+    // 3.3 Insere os itens
+    const itemsData = currentOrderItems.map(item => ({
+      id_loja: currentStore.id_loja, pedido_id: order.id, produto_id: Number(item.produto_id),
+      variacao_id: item.variacao_id ? Number(item.variacao_id) : null, quantidade: Number(item.quantidade) || 0,
+      preco_unitario: Number(item.preco_unitario) || 0, desconto: Number(calcularDescontoItem(item).toFixed(2)),
+      subtotal: Number(calcularSubtotalItem(item).toFixed(2)), observacao: item.observacao || null
+    }));
 
     const { error: itemsError } = await db.from("gestao_loja_pedidos_itens").insert(itemsData);
     if (itemsError) {
