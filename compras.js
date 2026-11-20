@@ -1129,7 +1129,7 @@ function buildPurchaseForm() {
       <button
         type="button"
         class="btn btn-primary"
-        onclick="savePurchase()"
+        onclick="if (editingPurchaseId) { updatePurchase(editingPurchaseId); } else { savePurchase(); }"
       >
         Salvar compra
       </button>
